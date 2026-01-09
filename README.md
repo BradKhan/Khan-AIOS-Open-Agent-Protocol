@@ -70,3 +70,74 @@ When starting a new project:
 2. Rewrite AGENT.md to describe the project and constraints
 3. Adjust planner.md and executor.md only if needed
 4. Begin recording mistakes and decisions in .ai/memory/
+
+---
+
+## External Standards and Tooling
+
+This boilerplate interoperates with external agent standards and tooling.
+They are intentionally not vendored into each project repository.
+
+Upstream references:
+
+- agents.md  
+  https://github.com/BradKhan/agents.md  
+  Open agent and skill declaration standard used for interoperability.
+
+- OpenSkills  
+  https://github.com/BradKhan/open-skills  
+  Standardized, reusable skill definitions.
+
+- Gemini CLI  
+  https://github.com/BradKhan/gemini-cli  
+  Optional CLI interface for interacting with Gemini models.
+
+- Qwen Code  
+  https://github.com/BradKhan/qwen-code  
+  Optional coding focused model and workflow tooling.
+
+- Trae Agent  
+  https://github.com/BradKhan/trae-agent  
+  Experimental agent execution and orchestration tooling.
+
+Each project may:
+- reference these repositories directly
+- fork them if modifications are required
+- integrate selectively via `.ai/skills/` and agents.md compatibility
+
+No external repository is required for basic operation of this workflow.
+
+---
+
+## Repository Structure
+
+- AGENT.md  
+  Canonical project context, constraints, and shared memory contract.
+
+- RULES.md  
+  Hard rules and enforcement boundaries.
+
+- agents.md  
+  Interoperability map for tools that understand agent and skill standards.
+
+- .ai/agents/  
+  Role definitions such as planner, executor, reviewer, verifier.
+
+- .ai/skills/  
+  Project specific and referenced skill documentation.
+
+- .ai/memory/  
+  Accumulated decisions, mistakes, and lessons.
+
+---
+
+## Guardrails
+
+This boilerplate is intentionally minimal.
+
+Do not:
+- vendor upstream standards or tooling by default
+- duplicate skills across projects unnecessarily
+- bypass planning or verification discipline
+
+If structure feels heavy, simplify consciously rather than ignoring it.

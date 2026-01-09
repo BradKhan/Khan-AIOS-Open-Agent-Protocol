@@ -207,3 +207,8 @@ When something is unclear:
 - suggest a plan rather than acting immediately
 
 Clarity tends to pay for itself.
+
+Note:
+- `.ai/skills/` is the default location for project specific skills
+- `skills/` is optional and only used if standardized OpenSkills are installed
+- Most projects will only use `.ai/skills/`
