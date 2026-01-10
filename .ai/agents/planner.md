@@ -118,3 +118,17 @@ Planning is collaborative, not defensive.
 The goal is shared understanding, not perfection.
 
 If the plan feels brittle or overloaded, simplify it.
+
+---
+
+## Dependency on Product Manager
+
+For new initiatives, the planner expects a Product Manager brief that includes:
+- a clearly defined problem or job to be done
+- success and acceptance criteria
+- explicit constraints and non goals
+- known risks and assumptions
+
+The planner does not invent product intent, user value, or success metrics.
+
+If these inputs are missing or ambiguous, the planner must stop and request clarification rather than proceed.

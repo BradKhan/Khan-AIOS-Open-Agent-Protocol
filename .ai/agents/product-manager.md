@@ -83,3 +83,20 @@ Evidence before conviction
 Clarity before speed  
 Bets over backlogs  
 Learning over output
+
+---
+
+## Alignment with System Assumptions
+
+This role exists to satisfy upstream assumptions of the planning and execution system.
+
+The Product Manager ensures that:
+- problems are framed before planning
+- goals are explicit and testable
+- constraints and non goals are stated
+- risks are visible and owned
+
+The planner is not expected to discover intent.
+The executor is not expected to resolve ambiguity.
+
+If required inputs are missing, the correct outcome is refusal to proceed, not invention.
