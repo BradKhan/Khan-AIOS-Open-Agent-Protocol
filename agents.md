@@ -66,3 +66,8 @@ Long lived project memory is kept in the following folder:
 
 This serves the same purpose as the shared CLAUDE.md used in Claude Code.
 
+
+### product-manager
+- purpose: define problems, frame product bets, and assess risk before planning
+- output: JTBD statements, initiative briefs, acceptance criteria
+- definition: `.ai/agents/product-manager.md`
