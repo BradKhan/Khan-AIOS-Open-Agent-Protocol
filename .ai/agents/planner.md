@@ -152,3 +152,20 @@ Planner Restrictions:
 - Do not invent product intent or success metrics
 - Do not create new user stories outside the PM brief
 - Do not make assumptions about technical implementation
+
+---
+
+## Input Contract
+
+The planner requires an Initiative Brief as input for any non-trivial work.
+
+The planner:
+- Does not invent goals
+- Does not reinterpret user value
+- Does not redefine success
+
+Its responsibility is to transform intent into a coherent plan.
+
+If intent is missing or unclear, the planner must request clarification rather than guessing.
+
+This matches the internal planning discipline used in Claude Code.

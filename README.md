@@ -1,3 +1,18 @@
+# KhanOS
+
+**KhanOS is a sovereign, vendor-agnostic AI engineering framework.**
+
+It is based on the internal workflow discipline pioneered by the Anthropic team
+and popularized through Claude Code,
+but implemented entirely using plain files, folders, and conventions.
+
+No lock-in.
+No proprietary pricing.
+No required model or provider.
+
+Use Claude, Gemini, Qwen, OpenAI, local models, or future tools not yet invented.
+
+KhanOS is designed to outlive them all.
 ﻿## Why This Workflow Exists
 
 This project's workflow is modeled on the engineering practices developed by Boris Cherny, creator of Claude Code.
@@ -141,3 +156,25 @@ Do not:
 - bypass planning or verification discipline
 
 If structure feels heavy, simplify consciously rather than ignoring it.
+
+---
+
+## How KhanOS Compares
+
+**Versus Claude Code**
+- Same planning and verification discipline
+- No proprietary tooling
+- No vendor pricing dependency
+- Fully auditable in git
+
+**Versus BMAD**
+- BMAD emphasizes roles and cadence
+- KhanOS emphasizes authority, intent, and verification
+- KhanOS avoids ceremony while preserving rigor
+
+**Versus Spec Kit**
+- Spec Kit focuses on artifacts
+- KhanOS focuses on workflow invariants and behavioral contracts
+- Specs emerge from intent, not the other way around
+
+KhanOS subsumes these approaches by enforcing the underlying assumptions they rely on.
