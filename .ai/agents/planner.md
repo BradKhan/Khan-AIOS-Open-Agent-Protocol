@@ -132,3 +132,23 @@ For new initiatives, the planner expects a Product Manager brief that includes:
 The planner does not invent product intent, user value, or success metrics.
 
 If these inputs are missing or ambiguous, the planner must stop and request clarification rather than proceed.
+
+---
+
+## Product Manager Dependency and Boundaries
+
+All planning activities require a Product Manager brief containing:
+- Jobs-to-be-Done (JTBD) or problem statement
+- Success criteria and acceptance conditions
+- Explicit constraints and non-goals
+- Known risks and assumptions
+
+Planner Responsibilities:
+- Translate PM brief into actionable plans
+- Highlight trade-offs and dependencies
+- Stop and request clarification if PM inputs are missing or ambiguous
+
+Planner Restrictions:
+- Do not invent product intent or success metrics
+- Do not create new user stories outside the PM brief
+- Do not make assumptions about technical implementation
