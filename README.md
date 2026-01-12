@@ -1,6 +1,6 @@
-# KhanOS
+# KhanOS Sovereign Development AI Framework
 
-**KhanOS is a sovereign, vendor-agnostic AI engineering framework.**
+**KhanOS Sovereign AI Development Framework is a sovereign, vendor-agnostic AI engineering framework.**
 
 It is based on the internal workflow discipline pioneered by the Anthropic team
 and popularized through Claude Code,
