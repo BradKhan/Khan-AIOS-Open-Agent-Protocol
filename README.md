@@ -1,6 +1,7 @@
-# KhanOS Sovereign Development AI Framework
+# Khan AI OS: Open Agent Protocol
+by Brad Khan: Technosocial Entrepreneur & Systems Architect
 
-**KhanOS Sovereign AI Development Framework is a sovereign, vendor-agnostic AI engineering framework.**
+**Khan AI OS Open Agent Protocol (OAP) is a sovereign, vendor-agnostic AI engineering framework.**
 
 It is based on the internal workflow discipline pioneered by the Anthropic team
 and popularized through Claude Code,
@@ -12,7 +13,7 @@ No required model or provider.
 
 Use Claude, Gemini, Qwen, OpenAI, local models, or future tools not yet invented.
 
-KhanOS is designed to outlive them all.
+OAP is designed to outlive them all.
 ﻿## Why This Workflow Exists
 
 This project's workflow is modeled on the engineering practices developed by Boris Cherny, creator of Claude Code.
@@ -159,7 +160,7 @@ If structure feels heavy, simplify consciously rather than ignoring it.
 
 ---
 
-## How KhanOS Compares
+## How OAP Compares
 
 **Versus Claude Code**
 - Same planning and verification discipline
@@ -169,12 +170,12 @@ If structure feels heavy, simplify consciously rather than ignoring it.
 
 **Versus BMAD**
 - BMAD emphasizes roles and cadence
-- KhanOS emphasizes authority, intent, and verification
-- KhanOS avoids ceremony while preserving rigor
+- OAP emphasizes authority, intent, and verification
+- OAP avoids ceremony while preserving rigor
 
 **Versus Spec Kit**
 - Spec Kit focuses on artifacts
-- KhanOS focuses on workflow invariants and behavioral contracts
+- OAP focuses on workflow invariants and behavioral contracts
 - Specs emerge from intent, not the other way around
 
-KhanOS subsumes these approaches by enforcing the underlying assumptions they rely on.
+Khan AIOS Open Agent Protocol subsumes these approaches by enforcing the underlying assumptions they rely on.
