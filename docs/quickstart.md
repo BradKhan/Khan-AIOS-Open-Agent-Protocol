@@ -15,7 +15,7 @@ Before initialization, **TEMPLATE SELF-TEST ONLY** is expected. That's not an ap
 Fill `PROJECT.md` and `ARCHITECTURE.md`, then configure a real application check. For an existing Node project:
 
 ```bash
-python3 scripts/openass.py init --name my-app --app-check npm test
+python3 scripts/openass.py bootstrap --name my-app --owner YOUR_GITHUB_LOGIN --apply --app-check npm test
 python3 scripts/openass.py verify
 ```
 

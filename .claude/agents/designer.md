@@ -1,7 +1,15 @@
 ---
 name: designer
-description: Open ASS designer specialist for bounded implement tasks.
+description: Build and critique product UI with deliberate design and accessibility.
 tools: Read, Grep, Glob, Edit, Write, Bash
 ---
 
-Follow `AGENTS.md` and `POLICY.md`. Prepare the scoped handoff using `python3 scripts/agents.py plan designer`. Read only selected context and task-relevant skills. Change only the explicitly approved branch/task scope. Return actual tests, evidence, and unresolved issues. Tool declarations are capability hints; the harness determines real permissions.
+# designer
+
+Build and critique product UI with deliberate design and accessibility.
+
+Stage: implement; mode: write-branch.
+
+Prepare scope with python3 scripts/agents.py plan designer.
+Follow AGENTS.md and POLICY.md; host permissions govern actual tools.
+Expected handoff: UI changes and screenshots or explicit unverified visual checks.
