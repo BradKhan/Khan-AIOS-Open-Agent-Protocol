@@ -2,141 +2,127 @@
   <img src="assets/open-ass-donkey.png" alt="A grinning gold pixel-art donkey, looking back over its shoulder" width="210">
 </p>
 
-<h1 align="center">Open ASS</h1>
-<p align="center"><strong>Open Agent Software System</strong></p>
-<p align="center"><strong>Get your ASS together.</strong></p>
+# Open ASS
 
-<p align="center">
-  <a href="docs/quickstart.md">Get started</a> ·
-  <a href="docs/architecture.md">How it works</a> ·
-  <a href="CONTRIBUTING.md">Contribute</a>
-</p>
+### Open Agent Software System
 
-AI agents can write code remarkably fast. Getting them to build the *right* thing, work together, remember decisions, catch mistakes, and ship finished software? Still a pain in the ass.
+**Get your ASS together.**
 
-**Open ASS is an open-source engineering system that gets your AI development workflow organized out of the box.**
+AI agents can write an entire application in minutes. Getting them to build the *right* thing, make it look good, write like a human, work together, catch their mistakes, and ship something worth using?
 
-It brings together proven engineering practices, specifications, agent skills, structured context, automation, and verification in a ready-made GitHub project.
+**Still a pain in the ass.**
 
-Use your preferred models and coding agents. Start with one. Add more when you need them. Your project, workflow, and engineering standards stay yours.
+Every new project seems to start the same way. Configure your agents. Install your favorite skills. Write another set of instructions. Explain your architecture for the fifth time. Then spend hours fixing ugly interfaces, rewriting robotic copy, and debugging code that was supposedly finished.
 
-## Why Open ASS?
+Switch models, lose context, add another agent, and repeat.
 
-The tools are getting better almost daily. The surrounding engineering process hasn't caught up.
+I built Open ASS because I got tired of rebuilding the development process every time I wanted to build something.
 
-You can generate an entire application in minutes, then spend hours fixing misunderstood requirements, reconstructing lost context, debugging unexpected behavior, or figuring out whether the agent actually tested anything.
+**It's a ready-made, open-source development system that brings the tools, skills, and practices of good software engineering into one GitHub repository.**
 
-Every new project starts with another round of configuring tools, writing instructions, and assembling a development workflow.
+You bring the idea and your preferred AI agents. Open ASS gives them a common way to work, from figuring out what to build through design, implementation, testing, and release.
 
-Open ASS is designed to eliminate that repeated work.
+The aim is simple: spend more time building useful software and less time managing the machinery around it.
 
-**Less setup. Less babysitting. Better software.**
+## Good software takes more than good code
 
-## What's included
+An application can compile perfectly and still be terrible.
 
-- **A development system, ready to use.** Procedures for defining, building, testing, reviewing, and releasing software.
-- **Your agents, your choice.** Portable instructions and task contracts that don't depend on one model or coding platform.
-- **Context that makes sense.** [Interpretable Context Methodology](docs/context-methodology.md) (ICM) helps agents find relevant project knowledge and make handoffs inspectable.
-- **Better engineering habits.** Specifications, test-driven development, reusable skills, and systematic debugging.
-- **Actual verification.** Executable checks, structured evidence, and GitHub CI. An agent saying "done" is not a test result.
-- **Room to grow.** Keep things lightweight for small projects. Add specialized agents, orchestration, and persistent memory when they're useful.
+The requirements were misunderstood. The interface looks like every other AI-generated dashboard. The copy reads like a cyborg having an identity crisis. Something important breaks the moment a user does anything unexpected.
 
-## How it works
+Open ASS addresses the whole development process.
 
-```text
-Define → Plan → Build → Verify → Ship
-```
+### Engineering
 
-Start with a GitHub issue. Give an agent the relevant context and a clear definition of success. Let it work, test its changes, and submit a pull request.
+Clear requirements, sensible architecture, structured development, systematic debugging, testing, and code review.
 
-The framework gives each stage a consistent process and makes the work inspectable.
+The framework draws on GitHub Spec Kit, Superpowers, Sentry, and established engineering practices. Small changes can move quickly. Riskier work gets more scrutiny.
 
-A minor bug fix doesn't need a small mountain of paperwork. Security-sensitive changes deserve considerably more scrutiny. Open ASS [adapts the process to the risk](POLICY.md).
+There's a process for getting things done, without making every bug fix feel like a government procurement exercise.
 
-GitHub remains the shared source of truth. Humans stay in control of consequential decisions.
+### Design
 
-## The best tools, working together
+Nobody wants another dashboard full of purple gradients, meaningless cards, and buttons that look pretty but don't do anything useful.
 
-Open ASS draws on useful work already happening across the open-source engineering community:
+Open ASS brings together Taste, Impeccable, Vercel's Web Interface Guidelines, React best practices, and frontend design skills.
 
-- [GitHub Spec Kit](https://github.com/github/spec-kit) for structured specifications and planning.
-- [Superpowers](https://github.com/obra/superpowers) for engineering practices and development skills.
-- [Interpretable Context Methodology](https://github.com/RinDig/Interpretable-Context-Methodology) for context routing and handoffs.
-- [Agent Skills](https://agentskills.io/specification) for portable, reusable capabilities.
-- GitHub Actions and deterministic testing tools for independent verification.
+These give agents better guidance for visual identity, usability, accessibility, performance, and the details that separate a working interface from a damn good one.
 
-We use complementary approaches without making you install every framework under the sun. The [component review](docs/selection.md) explains the decisions.
+### Writing
 
-The core works with repository files, Python, and GitHub. Additional integrations are optional. Support across individual agent harnesses is still being tested.
+Your landing page shouldn't sound like a press release written by a committee of chatbots.
 
-## Install curated agent skills
+Humanizer and writing practices help cut the buzzword soup, fake enthusiasm, corporate filler, and the relentlessly predictable phrasing that makes AI-generated copy so easy to spot.
 
-The template works without external skills. When you want more capability, choose a [curated profile](docs/skills.md) and install its **pinned, instruction-only** skill packages:
+That applies to marketing pages, documentation, onboarding, interface text, and everything else users actually read.
 
-```bash
-python3 scripts/skills.py list
-python3 scripts/skills.py plan --profile core --profile web
-python3 scripts/skills.py install --profile core --profile web
-python3 scripts/skills.py check
-```
+### Context and coordination
 
-The web profile includes **Taste, Impeccable, Vercel Web Interface Guidelines, React best practices, Anthropic Frontend Design, and the Playwright CLI skill**. Core covers debugging, TDD, worktrees, review, and verification. Security, writing, and skill-authoring profiles are also available.
+An agent shouldn't need your entire chat history explained every time it picks up a task.
 
-No remote executable code runs during installation. The full tools and runtime integrations may require separate setup, and installing skills alone does not establish tested compatibility with Hermes, Codex, or another harness. See [how installation and provenance work](docs/skills.md).
+Open ASS uses Interpretable Context Methodology (ICM) to organize project knowledge, route agents to relevant instructions, and make handoffs inspectable.
 
-## Get started
+Requirements, decisions, and accepted changes live in GitHub. You can change models or involve another developer without losing the project's direction.
 
-Copy this repository into a GitHub project. If the repository owner has enabled **Template repository**, click **Use this template** to begin.
+### Testing and verification
 
-Install the development requirements and check the starting structure:
+An agent saying "Done!" doesn't mean the work is done.
 
-```bash
-python3 -m pip install -r requirements-dev.txt
-python3 scripts/verify.py
-```
+Open ASS includes task contracts, automated checks, security review procedures, and GitHub CI. Changes can be evaluated against the original requirements and actual test results.
 
-At this point, verification checks the *template*, not your application.
+Agents can propose work and report what happened. Independent checks and authorized reviewers determine whether it's ready.
 
-Fill in [PROJECT.md](PROJECT.md) and [ARCHITECTURE.md](ARCHITECTURE.md), configure your application's real checks, and initialize. For example, if `npm test` already works in your project:
+## What's already in the ASS?
 
-```bash
-python3 scripts/init_project.py --name my-app --app-check npm test
-python3 scripts/verify.py
-```
+The repository currently includes:
 
-Replace `npm test` with the actual test command for your stack. Critical projects require a security check as well.
+- A GitHub-native development framework with specifications, policies, and risk-based workflows.
+- Five curated skill profiles covering engineering, web/design, security, writing, and skill creation.
+- 17 pinned external skills with an installer that verifies downloaded files and records their provenance.
+- ICM context routing to organize instructions and task handoffs.
+- Verification scripts, automated tests, and CI workflows.
+- A foundation for adding specialist agents, orchestration, and persistent memory as projects grow.
 
-To inspect which repository files are selected for an implementation-stage handoff:
+You don't need to install everything. Pick the capabilities relevant to your project.
 
-```bash
-python3 scripts/context.py check
-python3 scripts/context.py plan implement --working examples/task.json
-```
+The core works with GitHub and Python, without requiring a paid AI service or dedicated orchestration platform. Some external skills need additional tools to unlock their full functionality.
 
-Read the [quickstart](docs/quickstart.md) or explore the [architecture](docs/architecture.md).
+And your workflow stays in your repository, where it won't disappear when the next model comes along.
 
-## What's in the box?
+## Get your ASS up and running
 
-| Location | Purpose |
-| --- | --- |
-| [`AGENTS.md`](AGENTS.md), [`POLICY.md`](POLICY.md) | Agent rules, risk levels, permissions, and approval boundaries |
-| [`CONTEXT.md`](CONTEXT.md), [`context/`](context/) | Context routing, stage contracts, and reference selection |
-| [`sops/`](sops/) | Development procedures from research through release |
-| [`contracts/`](contracts/) | Machine-readable task and evidence formats |
-| [`.agents/skills/`](.agents/skills/) | Reusable agent skill examples |
-| [`scripts/`](scripts/), [`tests/`](tests/) | Deterministic checks and rejection-path tests |
-| [`.github/`](.github/) | GitHub issue templates, pull requests, and CI |
+Copy or fork the repository into a project.
 
-## Open source. Open to improvement.
+Install the development requirements and verify the foundation:
 
-**Open ASS is in alpha.** The core development contracts, context routing, verification scripts, and GitHub workflows are implemented. Broader agent integrations and performance benchmarks are still being developed.
+\`python3 -m pip install -r requirements-dev.txt\`
 
-Contributions are welcome, especially working integrations, engineering improvements, reproducible tests, and evidence that a method performs better.
+\`python3 scripts/verify.py\`
 
-If something is unnecessarily complicated, [open an issue](../../issues). If an agent confidently produces garbage, we'd like a reproducible example.
+See which skills are available:
 
-**Good software takes more than good autocomplete.**
+\`python3 scripts/skills.py list\`
 
-Created by [Brad Khan](https://github.com/BradKhan). [MIT licensed](LICENSE).
+Install the core engineering and web/design profiles:
 
-[Contribute](CONTRIBUTING.md) · [Report an issue](../../issues) · [Explore the docs](docs/architecture.md)
+\`python3 scripts/skills.py install --profile core --profile web\`
+
+Configure your project's actual application tests before relying on the framework to verify its behavior.
+
+[Quickstart](docs/quickstart.md) · [Skills and profiles](docs/skills.md) · [Architecture](docs/architecture.md)
+
+## Built in the open
+
+Open ASS is free, MIT licensed, and under active development.
+
+The framework, skill installer, context routing, and verification system are working. Full integration with different agent runtimes, broader automation, and comparative performance benchmarks are still being developed.
+
+There's plenty to improve. If you find a better engineering practice, a useful skill, or a problem the framework fails to catch, bring it in. Working examples and reproducible tests are especially welcome.
+
+I want this to become the kind of repository you reach for whenever you're starting a software project, because it saves you from setting up and fixing the same things over and over.
+
+**AI can already generate the code. Let's make it better at everything else it takes to ship a damn good product.**
+
+[Contribute](CONTRIBUTING.md) · [Report an issue](https://github.com/BradKhan/open-ASS/issues)
+
+Created by [Brad Khan](https://github.com/BradKhan). MIT licensed.
