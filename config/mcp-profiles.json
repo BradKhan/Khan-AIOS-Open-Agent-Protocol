@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "default": "none",
+  "profiles": {
+    "readme": {
+      "description": "Read-only local Open ASS MCP",
+      "servers": [
+        "openass"
+      ],
+      "permissions": "read-only"
+    },
+    "github": {
+      "description": "GitHub issues/PRs/CI; user provisions scoped token",
+      "servers": [
+        "openass",
+        "github-mcp-server"
+      ],
+      "permissions": "read-or-scoped-write; no admin"
+    },
+    "browser": {
+      "description": "Browser QA in an isolated profile; requires Playwright setup",
+      "servers": [
+        "openass",
+        "playwright"
+      ],
+      "permissions": "test-browser-only"
+    },
+    "memory": {
+      "description": "Optional Mnemosyne connector; private/project ACLs required",
+      "servers": [
+        "openass",
+        "mnemosyne"
+      ],
+      "permissions": "read-only-memory-by-default"
+    }
+  }
+}
