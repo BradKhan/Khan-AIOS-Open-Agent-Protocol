@@ -1,0 +1,21 @@
+name: pr-policy
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  pr-risk:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout full Git history for diff
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Enforce risk declaration and sensitive-path escalation
+        run: python3 scripts/pr_gate.py --event "$GITHUB_EVENT_PATH"
+      - name: Framework static security baseline
+        run: python3 scripts/security_baseline.py

@@ -37,6 +37,8 @@ def verify_contracts():
         jsonschema.validate(fixture,schema,format_checker=jsonschema.FormatChecker())
     run([sys.executable, 'scripts/context.py', 'check'], 'ICM context routing')
     run([sys.executable, 'scripts/skills.py', 'check'], 'pinned skill catalog')
+    run([sys.executable, 'scripts/agents.py', 'check'], 'specialist role registry')
+    run([sys.executable, 'scripts/security_baseline.py'], 'framework static security')
     print('[verify] documentation and schemas PASS')
 
 def detected_source():

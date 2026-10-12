@@ -1,0 +1,2 @@
+#!/bin/sh
+exec python3 scripts/hook_gate.py pre-push

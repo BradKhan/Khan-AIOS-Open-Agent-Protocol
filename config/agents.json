@@ -1,0 +1,92 @@
+{
+  "version": 1,
+  "description": "Portable specialist roles. Capabilities are requests, never authority; harness permissions and GitHub policy decide.",
+  "roles": {
+    "researcher": {
+      "stage": "research",
+      "mode": "read",
+      "skills": [],
+      "purpose": "Collect sourced evidence and options without changing approved requirements.",
+      "handoff": "Research note with sources, uncertainty and decisions needed."
+    },
+    "architect": {
+      "stage": "specify",
+      "mode": "read",
+      "skills": [],
+      "purpose": "Translate accepted intent into scoped architecture and acceptance criteria.",
+      "handoff": "Reviewable specification and implementation plan; no silent approval."
+    },
+    "engineer": {
+      "stage": "implement",
+      "mode": "write-branch",
+      "skills": [
+        "test-driven-development",
+        "systematic-debugging",
+        "using-git-worktrees",
+        "verification-before-completion"
+      ],
+      "purpose": "Implement an approved task in an isolated branch with reproducible tests.",
+      "handoff": "PR, head SHA, test commands and results."
+    },
+    "designer": {
+      "stage": "implement",
+      "mode": "write-branch",
+      "skills": [
+        "design-taste-frontend",
+        "impeccable",
+        "web-design-guidelines",
+        "frontend-design"
+      ],
+      "purpose": "Build and critique product UI with deliberate design and accessibility.",
+      "handoff": "UI changes and screenshots or explicit unverified visual checks."
+    },
+    "writer": {
+      "stage": "implement",
+      "mode": "write-branch",
+      "skills": [
+        "humanizer"
+      ],
+      "purpose": "Edit interface copy and documentation while preserving facts and voice.",
+      "handoff": "Reviewed copy diff with factual claims identified."
+    },
+    "reviewer": {
+      "stage": "verify",
+      "mode": "read",
+      "skills": [
+        "find-bugs",
+        "verification-before-completion"
+      ],
+      "purpose": "Review independently at the actual PR head SHA; do not self-approve.",
+      "handoff": "File-specific blockers, risk and independent CI links."
+    },
+    "security-reviewer": {
+      "stage": "verify",
+      "mode": "read",
+      "skills": [
+        "security-review",
+        "gha-security-review"
+      ],
+      "purpose": "Assess trust boundaries, authentication, authorization, data and workflow attacks.",
+      "handoff": "Severity-ranked, reproducible findings or explicit limits."
+    },
+    "qa": {
+      "stage": "verify",
+      "mode": "read",
+      "skills": [
+        "playwright-cli",
+        "web-design-guidelines"
+      ],
+      "purpose": "Check acceptance criteria, browser behavior and accessibility with observed evidence.",
+      "handoff": "Reproduction steps, tests, artifacts and missing coverage."
+    },
+    "release-manager": {
+      "stage": "release",
+      "mode": "read",
+      "skills": [
+        "verification-before-completion"
+      ],
+      "purpose": "Verify approved release eligibility and rollback readiness; cannot deploy autonomously.",
+      "handoff": "Release checklist and approval blockers."
+    }
+  }
+}
