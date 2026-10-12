@@ -105,6 +105,35 @@ class SupervisorTests(unittest.TestCase):
         with self.assertRaisesRegex(supervisor.SupervisorError,"still alive"):
             supervisor.recover(self.db,self.task,"owner",120,
                                process_alive=lambda pid: pid==91234568)
+    def test_claude_provider_reported_billing(self):
+        import json
+        self.enter(self.runtime("import sys,json;sys.stdin.read();print(json.dumps({'total_cost_usd':0.12}))"))
+        result=supervisor.run(self.db,self.task,"claude","engineer","worker",root=ROOT,
+                              reserve_cents=50,execute=True,ack_unmetered=True)
+        self.assertEqual(result["provider_reported_cost_cents"],12)
+        self.assertEqual(result["status"],"verifying")
+
+    def test_cost_overrun_rejects_verification(self):
+        self.enter(self.runtime("import sys,json;sys.stdin.read();print(json.dumps({'total_cost_usd':0.5}))"))
+        result=supervisor.run(self.db,self.task,"claude","engineer","worker",root=ROOT,
+                              reserve_cents=10,execute=True,ack_unmetered=True)
+        self.assertEqual(result["status"],"budget-overrun")
+        self.assertEqual(lifecycle.show(self.db,self.task)["state"],"failed")
+
+    def test_output_limit_terminates_run(self):
+        self.enter(self.runtime("import sys;sys.stdin.read();print('X'*2000)"))
+        with patch.object(supervisor,"MAX_OUTPUT_BYTES",1000):
+            result=supervisor.run(self.db,self.task,"codex","engineer","worker",root=ROOT,
+                                  reserve_cents=20,execute=True,ack_unmetered=True)
+        self.assertEqual(result["status"],"output-limit")
+
+    def test_refuses_dirty_checkout(self):
+        from subprocess import CompletedProcess
+        fake=[CompletedProcess([],0,"feature/work\n",""),CompletedProcess([],0," M app.py\n","")]
+        with patch.object(supervisor.subprocess,"run",side_effect=fake):
+            with self.assertRaisesRegex(supervisor.SupervisorError,"uncommitted"):
+                supervisor.safe_branch(ROOT)
+
     def test_refuses_to_mutate_default_branch(self):
         with patch.object(supervisor.subprocess,"run",return_value=type("R",(),{"returncode":0,"stdout":"main\n"})()):
             with self.assertRaisesRegex(supervisor.SupervisorError,"default branch"):

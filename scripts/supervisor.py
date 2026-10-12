@@ -14,6 +14,7 @@ import sqlite3
 import subprocess
 import sys
 import time
+from decimal import Decimal, InvalidOperation, ROUND_UP
 from pathlib import Path
 
 try:
@@ -23,6 +24,44 @@ except ModuleNotFoundError:
 
 ROOT = Path(__file__).resolve().parents[1]
 class SupervisorError(ValueError): pass
+MAX_OUTPUT_BYTES = 5_000_000
+
+def usage_from_output(path,runtime):
+    """Best-effort provider-reported amounts. Never equate to a hard billing cap."""
+    if not path.is_file() or path.stat().st_size > MAX_OUTPUT_BYTES:
+        return {"provider_cost_cents":None}
+    try:
+        lines=path.read_text(encoding="utf-8").splitlines()
+    except UnicodeError:
+        return {"provider_cost_cents":None}
+    found=None
+    for line in lines[-200:]:
+        try:
+            data=json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(data,dict) and (runtime=="claude" or data.get("type")=="result"):
+            found=data
+    result={"provider_cost_cents":None}
+    if isinstance(found,dict):
+        amount=found.get("total_cost_usd",found.get("cost_usd"))
+        if isinstance(amount,(int,float,str)) and not isinstance(amount,bool):
+            try:
+                number=Decimal(str(amount))
+                if number.is_finite() and 0<=number<=100000:
+                    result["provider_cost_cents"]=int((number*100).to_integral_value(rounding=ROUND_UP))
+            except (InvalidOperation,ValueError,OverflowError):
+                pass
+        tokens=found.get("tokens")
+        if isinstance(tokens,dict):
+            result["tokens"]={k:v for k,v in tokens.items()
+                              if k in ("input","output","total") and type(v)==int and v>=0}
+    return result
+
+def digest(path):
+    with path.open("rb") as file:
+        return hashlib.file_digest(file,"sha256").hexdigest()
+
 
 def init(db):
     db.execute("""CREATE TABLE IF NOT EXISTS attempts(
@@ -65,6 +104,10 @@ def safe_branch(root):
     name=result.stdout.strip()
     if name in ("main","master"):
         raise SupervisorError("refusing writable agent execution on the default branch")
+    dirty=subprocess.run(["git","status","--porcelain"],cwd=root,text=True,
+                         capture_output=True,timeout=10,check=False)
+    if dirty.returncode or dirty.stdout.strip():
+        raise SupervisorError("refusing to execute over uncommitted project changes")
     return name
 
 def terminate(process):
@@ -89,7 +132,7 @@ def run(db,task_id,runtime,role,actor,root=ROOT,timeout=900,reserve_cents=0,
         raise SupervisorError("executor must be an implementation role")
     role_plan=agents.plan(role,root=root)
     if role_plan["mode"]!="write-branch":raise SupervisorError("role must be branch-write")
-    cmd=harness.command(runtime,"write-branch")
+    cmd=harness.command(runtime,"write-branch",budget_cents=reserve_cents)
     if type(timeout)!=int or not 1<=timeout<=3600:raise SupervisorError("invalid timeout")
     if type(reserve_cents)!=int or reserve_cents<=0:
         raise SupervisorError("reserve-cents must be positive")
@@ -106,25 +149,26 @@ def run(db,task_id,runtime,role,actor,root=ROOT,timeout=900,reserve_cents=0,
     prompt=harness.make_prompt(role,root=root,include_skills=include_skills)
     # Criteria are mandatory context, not an instruction to change approval policy.
     prompt += "\n\nACCEPTED ISSUE #"+str(snapshot["issue"])+":\n"+snapshot["criteria"]
+    directory=root/".openass"/"runs"
+    if directory.is_symlink() or not directory.resolve().is_relative_to(root.resolve()):
+        raise SupervisorError("unsafe runtime artifact directory")
+    directory.mkdir(parents=True,exist_ok=True)
     started=lifecycle.transition(db,task_id,"start",actor,snapshot["rev"],spend=reserve_cents)
     rev=started["rev"]
     db.execute("INSERT INTO attempts(task,revision,harness,actor,worker_pid,heartbeat,status) VALUES (?,?,?,?,?,?,?)",
                (task_id,rev,runtime,actor,os.getpid(),time.time(),"running"))
-    directory=root/".openass"/"runs"
-    directory.mkdir(parents=True,exist_ok=True)
-    if directory.is_symlink() or not directory.resolve().is_relative_to(root.resolve()):
-        raise SupervisorError("unsafe runtime artifact directory")
     prefix=f"{task_id}-{rev}"
     result={"task":task_id,"attempt_revision":rev,"harness":runtime,"role":role,
             "budget_reservation_cents":reserve_cents,
-            "actual_provider_cost_cents":None,
+            "provider_reported_cost_cents":None,
             "note":"Reservation is NOT measured spend; host must set actual provider billing limits."}
     process=None
     status="failed"
     try:
-        with (directory/(prefix+".stdout")).open("wb") as stdout, (directory/(prefix+".stderr")).open("wb") as stderr:
-            os.chmod(stdout.name,0o600)
-            os.chmod(stderr.name,0o600)
+        outpath=directory/(prefix+".stdout")
+        errpath=directory/(prefix+".stderr")
+        flags=os.O_WRONLY|os.O_CREAT|os.O_EXCL|getattr(os,"O_NOFOLLOW",0)
+        with os.fdopen(os.open(outpath,flags,0o600),"wb") as stdout, os.fdopen(os.open(errpath,flags,0o600),"wb") as stderr:
             process=popen(cmd,stdin=subprocess.PIPE,stdout=stdout,stderr=stderr,cwd=root,
                           start_new_session=(os.name!="nt"))
             heartbeat(db,task_id,rev,process.pid)
@@ -136,6 +180,10 @@ def run(db,task_id,runtime,role,actor,root=ROOT,timeout=900,reserve_cents=0,
                     status="cancelled"
                     terminate(process)
                     break
+                if outpath.stat().st_size>MAX_OUTPUT_BYTES or errpath.stat().st_size>MAX_OUTPUT_BYTES:
+                    status="output-limit"
+                    terminate(process)
+                    break
                 if clock()>deadline:
                     status="timeout"
                     terminate(process)
@@ -143,10 +191,17 @@ def run(db,task_id,runtime,role,actor,root=ROOT,timeout=900,reserve_cents=0,
                 heartbeat(db,task_id,rev)
                 sleep(0.25)
             code=process.wait()
-        result.update(exit_code=code,
-                      stdout_sha256=hashlib.sha256((directory/(prefix+".stdout")).read_bytes()).hexdigest(),
-                      stderr_sha256=hashlib.sha256((directory/(prefix+".stderr")).read_bytes()).hexdigest())
-        if status=="failed" and code==0:status="verifying"
+        result.update(exit_code=code,stdout_sha256=digest(outpath),stderr_sha256=digest(errpath))
+        if outpath.stat().st_size>MAX_OUTPUT_BYTES or errpath.stat().st_size>MAX_OUTPUT_BYTES:
+            status="output-limit"
+        usage=usage_from_output(outpath,runtime)
+        result.update(usage)
+        result["provider_reported_cost_cents"]=usage.get("provider_cost_cents")
+        if status=="failed" and code==0:
+            status="verifying"
+        if (result["provider_reported_cost_cents"] is not None
+                and result["provider_reported_cost_cents"]>reserve_cents):
+            status="budget-overrun"
         result["status"]=status
     except BaseException as exc:
         if process is not None and process.poll() is None:

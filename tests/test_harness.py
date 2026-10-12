@@ -28,6 +28,12 @@ class HarnessTests(unittest.TestCase):
         self.assertIn("--worktree",harness.command("hermes","write-branch"))
         self.assertIn("--checkpoints",harness.command("hermes","write-branch"))
         self.assertNotIn("--yolo",harness.command("hermes","write-branch"))
+    def test_claude_native_dollar_cap(self):
+        argv=harness.command("claude","write-branch",budget_cents=125)
+        self.assertEqual(argv[argv.index("--max-budget-usd")+1],"1.25")
+        with self.assertRaises(harness.HarnessError):
+            harness.command("claude","write-branch",budget_cents=0)
+
     def test_claude_plan_mode_for_reviewers(self):
         self.assertIn("plan",harness.command("claude","read"))
     def test_handoff_provenance(self):

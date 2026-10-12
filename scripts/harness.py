@@ -18,7 +18,7 @@ ROOT=Path(__file__).resolve().parents[1]
 HARNESSES={"codex":"codex","claude":"claude","hermes":"hermes"}
 class HarnessError(ValueError): pass
 
-def command(harness,mode):
+def command(harness,mode,budget_cents=None):
     if harness not in HARNESSES or mode not in ("read","write-branch"):
         raise HarnessError("unknown harness or mode")
     if harness=="codex":
@@ -27,6 +27,10 @@ def command(harness,mode):
     if harness=="claude":
         result=["claude","-p","--output-format","json","--max-turns","16"]
         if mode=="read":result+=["--permission-mode","plan"]
+        if budget_cents is not None:
+            if type(budget_cents)!=int or budget_cents<=0:
+                raise HarnessError("native Claude budget must be positive integer cents")
+            result+=["--max-budget-usd",f"{budget_cents/100:.2f}"]
         return result
     # Hermes --safe-mode removes AGENTS.md, hooks, skills and MCP. Never use
     # it as a read-only policy! Constrain tools and host sandbox separately.
