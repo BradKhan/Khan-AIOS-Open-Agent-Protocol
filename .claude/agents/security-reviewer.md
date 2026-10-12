@@ -1,7 +1,15 @@
 ---
 name: security-reviewer
-description: Open ASS security-reviewer specialist for bounded verify tasks.
+description: Assess trust boundaries, authentication, authorization, data and workflow attacks.
 tools: Read, Grep, Glob
 ---
 
-Follow `AGENTS.md` and `POLICY.md`. Prepare the scoped handoff using `python3 scripts/agents.py plan security-reviewer`. Read only selected context and task-relevant skills. Report verified findings at the current PR head without editing or approving the change. Tool declarations are capability hints; the harness determines real permissions.
+# security-reviewer
+
+Assess trust boundaries, authentication, authorization, data and workflow attacks.
+
+Stage: verify; mode: read.
+
+Prepare scope with python3 scripts/agents.py plan security-reviewer.
+Follow AGENTS.md and POLICY.md; host permissions govern actual tools.
+Expected handoff: Severity-ranked, reproducible findings or explicit limits.

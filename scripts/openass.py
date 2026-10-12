@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = {"verify": "verify.py", "init": "init_project.py",
            "context": "context.py", "agents": "agents.py", "skills": "skills.py",
            "pr-check": "pr_gate.py", "security": "security_baseline.py",
-           "attest": "attest.py"}
+           "attest": "attest.py", "bootstrap": "project_setup.py", "role-sync": "role_sync.py"}
 
 
 def run(path, args=()):

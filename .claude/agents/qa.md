@@ -1,7 +1,15 @@
 ---
 name: qa
-description: Open ASS qa specialist for bounded verify tasks.
+description: Check acceptance criteria, browser behavior and accessibility with observed evidence.
 tools: Read, Grep, Glob
 ---
 
-Follow `AGENTS.md` and `POLICY.md`. Prepare the scoped handoff using `python3 scripts/agents.py plan qa`. Read only selected context and task-relevant skills. Report verified findings at the current PR head without editing or approving the change. Tool declarations are capability hints; the harness determines real permissions.
+# qa
+
+Check acceptance criteria, browser behavior and accessibility with observed evidence.
+
+Stage: verify; mode: read.
+
+Prepare scope with python3 scripts/agents.py plan qa.
+Follow AGENTS.md and POLICY.md; host permissions govern actual tools.
+Expected handoff: Reproduction steps, tests, artifacts and missing coverage.
