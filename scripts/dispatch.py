@@ -1,0 +1,127 @@
+#!/usr/bin/env python3
+"""Drive a scoped task through agent execution, verification and PR review handoff.
+
+Never grants merge rights or treats an agent's success message as acceptance.
+"""
+import argparse
+import hashlib
+import json
+import re
+import subprocess
+import sys
+from pathlib import Path
+try:
+    from scripts import attest, lifecycle, supervisor
+except ModuleNotFoundError:
+    import attest, lifecycle, supervisor
+
+ROOT=Path(__file__).resolve().parents[1]
+class DispatchError(ValueError):pass
+
+def local_head(root=ROOT,runner=subprocess.run):
+    r=runner(["git","rev-parse","HEAD"],cwd=root,capture_output=True,
+             text=True,timeout=12,check=False)
+    head=(r.stdout or "").strip()
+    if r.returncode or not re.fullmatch("[a-f0-9]{40}",head):
+        raise DispatchError("cannot determine exact Git head")
+    clean=runner(["git","status","--porcelain"],cwd=root,capture_output=True,
+                 text=True,timeout=12,check=False)
+    if clean.returncode or clean.stdout.strip():
+        raise DispatchError("commit all work before a review handoff")
+    return head
+
+def verify_project(root=ROOT,runner=subprocess.run):
+    config=json.loads((root/"config/project.json").read_text(encoding="utf-8"))
+    if config.get("initialized") is not True:
+        raise DispatchError("configure actual application checks before verification")
+    r=runner([sys.executable,"scripts/verify.py"],cwd=root,capture_output=True,
+             text=True,timeout=600,check=False)
+    if r.returncode:
+        raise DispatchError("application verifier returned exit "+str(r.returncode))
+    output=((r.stdout or "")+"\n"+(r.stderr or "")).encode()
+    return {"exit_code":0,"output_sha256":hashlib.sha256(output).hexdigest()}
+
+def matching_pr(repo,number,head,fetch=attest.api_get):
+    if not re.fullmatch("[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+",str(repo)):
+        raise DispatchError("valid GitHub repository required")
+    if type(number)!=int or number<=0:
+        raise DispatchError("valid PR number required")
+    pr=fetch("/repos/"+repo+"/pulls/"+str(number))
+    if pr.get("state")!="open" or pr.get("head",{}).get("sha")!=head:
+        raise DispatchError("open PR head differs from local reviewed head")
+    base=(pr.get("base") or {}).get("repo") or {}
+    if base.get("full_name","").lower()!=repo.lower():
+        raise DispatchError("PR base repository mismatch")
+    return {"number":number,"head_sha":head,"url":pr.get("html_url")}
+
+def dispatch(db,task_id,runtime,actor,repo=None,pr=None,reserve_cents=0,timeout=900,
+             execute=False,ack_unmetered=False,max_attempts=1,root=ROOT,
+             execute_agent=supervisor.run,verifier=verify_project,fetch_pr=matching_pr):
+    if type(max_attempts)!=int or not 1<=max_attempts<=3:
+        raise DispatchError("max_attempts must be 1..3")
+    record=lifecycle.show(db,task_id)
+    if record["state"] not in ("ready","failed","verifying"):
+        raise DispatchError("task is not ready, failed, or verifying")
+    if not execute:
+        return {"task":task_id,"status":"dry-run","state":record["state"],
+                "harness":runtime,"max_attempts":max_attempts,
+                "note":"No inference. Use --execute --ack-unmetered to run."}
+    if not ack_unmetered:
+        raise DispatchError("explicit --ack-unmetered required")
+    result={"task":task_id,"harness":runtime,"attempts":[]}
+    for _ in range(max_attempts):
+        if record["state"]=="failed":
+            record=lifecycle.transition(db,task_id,"retry",actor,record["rev"])
+        if record["state"]=="ready":
+            run=execute_agent(db,task_id,runtime,"engineer",actor,root=root,timeout=timeout,
+                              reserve_cents=reserve_cents,execute=True,ack_unmetered=True)
+            result["attempts"].append({"status":run["status"],
+                                       "exit_code":run.get("exit_code"),
+                                       "provider_reported_cost_cents":run.get("provider_reported_cost_cents")})
+            record=lifecycle.show(db,task_id)
+        if record["state"] in ("verifying","cancelled"):
+            break
+        if record["state"]!="failed":
+            raise DispatchError("runner returned inconsistent task state")
+    if record["state"]=="failed":
+        result["status"]="failed"
+        return result
+    if record["state"]=="cancelled":
+        result["status"]="cancelled"
+        return result
+    result["verification"]=verifier(root=root)
+    if pr is None:
+        result["status"]="awaiting-pull-request"
+        return result
+    head=local_head(root)
+    review_pr=fetch_pr(repo,pr,head)
+    next_state=lifecycle.transition(db,task_id,"review",actor,record["rev"],head_sha=head)
+    result.update(status="awaiting-independent-review",pr=review_pr,
+                  state=next_state["state"],head_sha=head,
+                  note="An authorized independent human reviewer must approve the current PR head.")
+    return result
+
+def main():
+    p=argparse.ArgumentParser(description=__doc__)
+    p.add_argument("--db",type=Path,default=lifecycle.DEFAULT_DB)
+    p.add_argument("task");p.add_argument("--harness",choices=("codex","claude","hermes"),required=True)
+    p.add_argument("--actor",required=True)
+    p.add_argument("--reserve-cents",type=int,default=100)
+    p.add_argument("--timeout",type=int,default=900)
+    p.add_argument("--max-attempts",type=int,default=1)
+    p.add_argument("--repo");p.add_argument("--pr",type=int)
+    p.add_argument("--execute",action="store_true")
+    p.add_argument("--ack-unmetered",action="store_true")
+    a=p.parse_args()
+    try:
+        with lifecycle.connect(a.db) as db:
+            report=dispatch(db,a.task,a.harness,a.actor,a.repo,a.pr,a.reserve_cents,
+                            a.timeout,a.execute,a.ack_unmetered,a.max_attempts)
+        print(json.dumps(report,indent=2))
+        if report["status"] in ("failed","cancelled"):
+            raise SystemExit(1)
+    except (DispatchError,lifecycle.LifecycleError,supervisor.SupervisorError,
+            attest.AttestError,ValueError,OSError,subprocess.TimeoutExpired) as exc:
+        print("dispatch: "+str(exc),file=sys.stderr)
+        raise SystemExit(1)
+if __name__=="__main__":main()
