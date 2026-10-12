@@ -15,6 +15,7 @@ def fixture():
     blocked = b"#!/bin/sh\nexit 0\n"
     blobs = {
         "skills/sample-skill/SKILL.md": text,
+        "skills/sample-skill/LICENSE": b"MIT License; keep the notice with the skill.",
         "skills/sample-skill/reference/guide.md": reference,
         "skills/sample-skill/scripts/run.sh": blocked,
         "skills/sample-skill/scripts/data/huge-index.json": b"{}" * 500_000,
@@ -24,7 +25,9 @@ def fixture():
          "size": len(content), "sha": skills.blob_sha(content)}
         for path, content in blobs.items()
     ]
-    entries[2]["mode"] = "100755"
+    for entry in entries:
+        if entry["path"].endswith("/scripts/run.sh"):
+            entry["mode"] = "100755"
     commit = "a" * 40
     catalog = {"version": 1, "profiles": {"core": ["sample-skill"]},
                "skills": [{"id": "sample-skill", "source": "example/skills",
@@ -120,6 +123,7 @@ class SkillInstallerTests(unittest.TestCase):
         self.assertEqual(result, ["sample-skill"])
         root = self.root / ".agents/skills/sample-skill"
         self.assertTrue((root / "SKILL.md").exists())
+        self.assertIn("MIT License", (root / "LICENSE").read_text())
         self.assertTrue((root / "reference/guide.md").exists())
         self.assertFalse((root / "scripts/run.sh").exists())
         self.assertFalse((root / "scripts/data/huge-index.json").exists())

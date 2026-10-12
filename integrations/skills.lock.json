@@ -116,7 +116,7 @@
       "source": "anthropics/skills",
       "revision": "dbd4588f9e1033efb41dad4bef2f7947c8993d44",
       "directory": "skills/frontend-design",
-      "license": "upstream",
+      "license": "Apache-2.0 (skill-specific LICENSE.txt)",
       "description": "Frontend design execution"
     },
     {
@@ -132,7 +132,7 @@
       "source": "getsentry/skills",
       "revision": "d18b7aa8ba878354e5c348310230e652f7690f9c",
       "directory": "skills/security-review",
-      "license": "upstream skill license; verify",
+      "license": "CC-BY-SA-4.0 (skill-specific LICENSE; OWASP attribution)",
       "description": "Security review of application code"
     },
     {
@@ -164,7 +164,7 @@
       "source": "anthropics/skills",
       "revision": "dbd4588f9e1033efb41dad4bef2f7947c8993d44",
       "directory": "skills/skill-creator",
-      "license": "upstream",
+      "license": "Apache-2.0 (skill-specific LICENSE.txt)",
       "description": "Skill authoring and evaluation methodology"
     }
   ]

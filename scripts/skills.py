@@ -18,6 +18,8 @@ from pathlib import Path, PurePosixPath
 ROOT = Path(__file__).resolve().parents[1]
 CATALOG = "integrations/skills.lock.json"
 ALLOWED_EXT = {".md", ".txt", ".json", ".yaml", ".yml", ".toml"}
+LICENSE_NAMES = {"LICENSE", "LICENSE.txt", "LICENSE.md", "COPYING", "COPYING.txt",
+                 "COPYING.md", "NOTICE", "NOTICE.txt", "NOTICE.md"}
 MAX_FILES = 180
 MAX_FILE = 512_000
 MAX_SKILL = 4_000_000
@@ -144,10 +146,12 @@ def remote_files(record, fetch, cache):
         # Instruction-only installation: never package upstream scripts, build assets,
         # large data bundles, or unrelated files just because they are text formats.
         first = relative.split("/", 1)[0]
-        if relative != "SKILL.md" and ("/" not in relative or first not in ("reference", "references", "rules", "agents", "examples")):
+        # Carry provenance and legal notices; never include scripts or executables.
+        is_license = "/" not in relative and relative in LICENSE_NAMES
+        if relative != "SKILL.md" and not is_license and ("/" not in relative or first not in ("reference", "references", "rules", "agents", "examples")):
             continue
         check_path(relative)
-        if entry.get("type") != "blob" or Path(relative).suffix.lower() not in ALLOWED_EXT:
+        if entry.get("type") != "blob" or (Path(relative).suffix.lower() not in ALLOWED_EXT and not is_license):
             continue
         if entry.get("mode") != "100644":
             continue  # Do not download symlinks or executable files.

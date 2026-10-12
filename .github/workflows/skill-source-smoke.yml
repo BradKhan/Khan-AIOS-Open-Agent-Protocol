@@ -25,3 +25,16 @@ jobs:
           python3 scripts/skills.py install --profile core --profile web --profile security --profile writing --profile authoring
       - name: Verify installed snapshots
         run: python3 scripts/skills.py audit
+      - name: Independently validate Agent Skills metadata
+        run: |
+          python3 -m pip install --disable-pip-version-check skills-ref==0.1.1
+          python3 - <<'PY'
+          from pathlib import Path
+          from skills_ref import validate
+          for folder in sorted(Path(".agents/skills").iterdir()):
+              if (folder / "SKILL.md").is_file():
+                  issues = validate(folder)
+                  if issues:
+                      raise SystemExit(f"{folder}: {issues}")
+          print("Agent Skills reference validation PASS")
+          PY
