@@ -1,21 +1,29 @@
 name: pr-policy
+# Trusted base-branch policy. Never check out or execute an untrusted PR head.
 on:
-  pull_request:
+  pull_request_target:
+    types: [opened, synchronize, reopened, edited, ready_for_review]
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   pr-risk:
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request_target'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Checkout full Git history for diff
+      - name: Checkout trusted base policy
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
+          ref: ${{ github.event.pull_request.base.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - name: Enforce risk declaration and sensitive-path escalation
+      - name: Fetch PR commit graph as data only
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          git fetch --no-tags --no-recurse-submodules origin "+refs/pull/${PR_NUMBER}/head:refs/remotes/origin/openass-pr"
+      - name: Apply policy from trusted base branch
         run: python3 scripts/pr_gate.py --event "$GITHUB_EVENT_PATH"
-      - name: Framework static security baseline
+      - name: Static framework security baseline from base
         run: python3 scripts/security_baseline.py

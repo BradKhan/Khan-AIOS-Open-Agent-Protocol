@@ -17,7 +17,7 @@ Open ASS provides a working **engineering control plane in a GitHub repository**
 
 ## Development cycle
 
-An issue holds accepted criteria. Classify its risk, prepare scoped agent context, work in an isolated branch, and run the app's actual tests. Submit a PR. CI inspects risk declarations and sensitive changed paths. Independent review and required checks determine acceptance. The executor does not approve its own work.
+An issue holds accepted criteria. Classify its risk, prepare scoped agent context, work in an isolated branch, and run the app's actual tests. Submit a PR. A read-only `pull_request_target` job runs the PR risk checker from the trusted base commit, fetching the proposed commit **only as Git data**. It inspects risk declarations and sensitive changed paths without executing PR code. Rulesets still have to require this check. Independent review and required checks determine acceptance. The executor does not approve its own work.
 
 ### Hooks
 

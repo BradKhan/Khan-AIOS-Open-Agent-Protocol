@@ -1,0 +1,9 @@
+# Copy the following `hooks:` section into your chosen Hermes profile config.
+# Replace /ABSOLUTE/PROJECT/PATH with this trusted checkout's real location.
+# Hermes prompts for first-use hook consent. DO NOT turn on hooks_auto_accept globally.
+hooks:
+  pre_tool_call:
+    - matcher: "terminal|write_file|patch"
+      command: "python3 /ABSOLUTE/PROJECT/PATH/scripts/hermes_hook.py"
+      timeout: 5
+      fail_closed: true
