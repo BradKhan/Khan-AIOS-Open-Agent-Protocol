@@ -59,7 +59,8 @@
               "string",
               "null"
             ],
-            "format": "uri"
+            "format": "uri",
+            "pattern": "^https://\\S+$"
           }
         }
       }
