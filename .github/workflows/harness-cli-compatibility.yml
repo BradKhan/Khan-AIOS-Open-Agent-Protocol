@@ -1,0 +1,30 @@
+name: harness-cli-compatibility
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  harness-cli:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Install pinned upstream CLIs without running install scripts
+        run: |
+          mkdir -p "$RUNNER_TEMP/openass-harness"
+          npm install --prefix "$RUNNER_TEMP/openass-harness" --ignore-scripts --no-save \
+            @openai/codex@0.162.1 @anthropic-ai/claude-code@2.1.296
+      - name: Probe real Codex and Claude CLI options without inference
+        run: |
+          export PATH="$RUNNER_TEMP/openass-harness/node_modules/.bin:$PATH"
+          python3 scripts/harness_compat.py --harness codex --harness claude \
+            --expect-version codex=0.162.1 --expect-version claude=2.1.296 --strict
+      - name: Check documented Hermes command and prohibited bypass flags
+        run: |
+          python3 -m unittest tests.test_harness tests.test_harness_compat -v
