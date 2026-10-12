@@ -77,7 +77,8 @@
       "revision": "d18b7aa8ba878354e5c348310230e652f7690f9c",
       "directory": "skills/iterate-pr",
       "license": "Apache-2.0",
-      "description": "PR feedback and iteration"
+      "description": "PR feedback and iteration",
+      "compatibility_note": "Uses Claude-specific disable-model-invocation frontmatter; not fully Agent Skills portable."
     },
     {
       "id": "design-taste-frontend",
