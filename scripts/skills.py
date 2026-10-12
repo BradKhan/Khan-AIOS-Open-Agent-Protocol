@@ -141,6 +141,11 @@ def remote_files(record, fetch, cache):
         relative = path[len(prefix):]
         if not relative or "/" in relative and record["directory"] == ".":
             continue  # A root-level SKILL.md is intentionally not expanded into the entire repo.
+        # Instruction-only installation: never package upstream scripts, build assets,
+        # large data bundles, or unrelated files just because they are text formats.
+        first = relative.split("/", 1)[0]
+        if relative != "SKILL.md" and ("/" not in relative or first not in ("reference", "references", "rules", "agents", "examples")):
+            continue
         check_path(relative)
         if entry.get("type") != "blob" or Path(relative).suffix.lower() not in ALLOWED_EXT:
             continue
