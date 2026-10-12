@@ -15,21 +15,14 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
-      - name: Install pinned upstream CLIs without running install scripts
+      - name: Install pinned upstream CLIs in isolated, credential-free runner
         run: |
           mkdir -p "$RUNNER_TEMP/openass-harness"
-          npm install --prefix "$RUNNER_TEMP/openass-harness" --ignore-scripts --no-save \
+          npm install --prefix "$RUNNER_TEMP/openass-harness" --no-save \
             @openai/codex@0.162.1 @anthropic-ai/claude-code@2.1.296
       - name: Probe real Codex and Claude CLI options without inference
         run: |
           export PATH="$RUNNER_TEMP/openass-harness/node_modules/.bin:$PATH"
-          python3 - <<'PY'
-          import os,shutil
-          for name in ("codex","claude"):
-              path=shutil.which(name)
-              print(name, "path", path, "target", os.path.realpath(path) if path else None)
-              if path:print(name,"header",open(path,"rb").read(100))
-          PY
           python3 scripts/harness_compat.py --harness codex --harness claude \
             --expect-version codex=0.162.1 --expect-version claude=2.1.296 --strict
       - name: Check documented Hermes command and prohibited bypass flags
