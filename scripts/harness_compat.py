@@ -9,9 +9,11 @@ import shutil
 import subprocess
 import sys
 
+# Anthropic intentionally omits --max-turns from --help while keeping it
+# supported for -p. A help-only probe must not flag this documented behavior.
 FLAGS={
     "codex":("exec",("--sandbox","--json")),
-    "claude":(None,("--output-format","--max-turns","--permission-mode")),
+    "claude":(None,("--output-format","--permission-mode")),
     "hermes":("chat",("--query-file","--oneshot","--format",
                      "--max-turns","--worktree","--checkpoints","--toolsets"))
 }
