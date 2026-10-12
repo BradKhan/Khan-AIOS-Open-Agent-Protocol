@@ -1,0 +1,47 @@
+name: browser-evaluation
+on:
+  pull_request:
+    paths:
+      - "scripts/**"
+      - "tests/**"
+      - ".github/workflows/browser-evaluation.yml"
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser-fixtures:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Install pinned browser tools
+        run: |
+          python3 -m pip install --disable-pip-version-check -r requirements-dev.txt playwright==1.60.0
+          python3 -m playwright install --with-deps chromium
+          mkdir -p /tmp/openass-axe
+          cd /tmp/openass-axe
+          npm init -y >/dev/null
+          npm install --no-save --package-lock=false axe-core@4.10.3
+      - name: Test real Chromium and axe against valid and invalid fixtures
+        run: |
+          python3 - <<'PY'
+          import json, subprocess
+          from pathlib import Path
+          from scripts import browser_probe, product_quality
+          root=Path.cwd()
+          axe=Path("/tmp/openass-axe/node_modules/axe-core/axe.min.js")
+          head=subprocess.check_output(["git","rev-parse","HEAD"],text=True).strip()
+          valid=browser_probe.probe(root/"tests/fixtures/valid-page.html",axe,root/".openass/valid",head,"fixture-reviewer")
+          assert valid["browser"]["passed"] and not valid["accessibility"]["violations"],valid
+          manifest=json.loads((root/valid["manifest"]).read_text())
+          assert product_quality.verify_evidence(manifest,root)["status"]=="evidence-validated"
+          invalid=browser_probe.probe(root/"tests/fixtures/invalid-page.html",axe,root/".openass/invalid",head)
+          assert invalid["accessibility"]["violations"],invalid
+          print("Chromium and axe: valid fixture passed, defective fixture failed")
+          PY
+      - name: Failure-injection evaluation
+        run: python3 scripts/adversarial_eval.py --out .openass/evaluation.json
