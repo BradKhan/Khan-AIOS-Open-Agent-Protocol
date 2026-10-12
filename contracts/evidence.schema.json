@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Agent-reported evidence claim, not trusted CI attestation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "canonical_issue",
+    "commit_sha",
+    "run_id",
+    "observed_at",
+    "checks"
+  ],
+  "properties": {
+    "version": {
+      "const": "0.2"
+    },
+    "canonical_issue": {
+      "type": "string",
+      "pattern": "^[^/\\s]+/[^#\\s]+#[1-9][0-9]*$"
+    },
+    "commit_sha": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{40}$"
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 3
+    },
+    "observed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "checks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "command",
+          "exit_code"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "command": {
+            "type": "string",
+            "minLength": 1
+          },
+          "exit_code": {
+            "type": "integer"
+          },
+          "artifact_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uri",
+            "pattern": "^https://\\S+$"
+          }
+        }
+      }
+    },
+    "notes": {
+      "type": "string"
+    }
+  }
+}

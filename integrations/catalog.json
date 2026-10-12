@@ -1,0 +1,46 @@
+{
+  "purpose": "Optional reviewed upstream candidates, not automatically installed dependencies",
+  "as_of": "2026-10-12",
+  "candidates": [
+    {
+      "name": "Spec Kit",
+      "url": "https://github.com/github/spec-kit",
+      "purpose": "Feature specification"
+    },
+    {
+      "name": "Superpowers",
+      "url": "https://github.com/obra/superpowers",
+      "purpose": "Debugging TDD isolation"
+    },
+    {
+      "name": "Agent Skills",
+      "url": "https://agentskills.io/specification",
+      "purpose": "Skill directory standard"
+    },
+    {
+      "name": "Sentry Skills",
+      "url": "https://github.com/getsentry/skills",
+      "purpose": "PR review and fixes"
+    },
+    {
+      "name": "Impeccable",
+      "url": "https://github.com/pbakaus/impeccable",
+      "purpose": "Design critique"
+    },
+    {
+      "name": "Vercel Agent Skills",
+      "url": "https://github.com/vercel-labs/agent-skills",
+      "purpose": "Web interface engineering"
+    },
+    {
+      "name": "Playwright",
+      "url": "https://github.com/microsoft/playwright",
+      "purpose": "Browser verification"
+    },
+    {
+      "name": "Promptfoo",
+      "url": "https://github.com/promptfoo/promptfoo",
+      "purpose": "Agent regression evaluations"
+    }
+  ]
+}

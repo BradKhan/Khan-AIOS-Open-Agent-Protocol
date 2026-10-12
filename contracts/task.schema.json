@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Portable task handoff v0.2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "canonical_issue",
+    "risk",
+    "intent",
+    "acceptance",
+    "max_attempts",
+    "budget_usd"
+  ],
+  "properties": {
+    "version": {
+      "const": "0.2"
+    },
+    "canonical_issue": {
+      "type": "string",
+      "pattern": "^[^/\\s]+/[^#\\s]+#[1-9][0-9]*$"
+    },
+    "risk": {
+      "enum": [
+        "fast",
+        "standard",
+        "critical"
+      ]
+    },
+    "intent": {
+      "type": "string",
+      "minLength": 12
+    },
+    "spec_path": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "acceptance": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 5
+      }
+    },
+    "max_attempts": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 20
+    },
+    "budget_usd": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 10000
+    },
+    "executor": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "base_sha": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[a-f0-9]{40}$"
+    }
+  }
+}

@@ -1,181 +1,40 @@
-# Khan AI OS: Open Agent Protocol
-by Brad Khan: Technosocial Entrepreneur & Systems Architect
+# Open Agent Engineering
 
-**Khan AI OS Open Agent Protocol (OAP) is a sovereign, vendor-agnostic AI engineering framework.**
+**A GitHub-native, agent-independent way to specify, build, verify, and ship software.**
 
-It is based on the internal workflow discipline pioneered by the Anthropic team
-and popularized through Claude Code,
-but implemented entirely using plain files, folders, and conventions.
+This is a public alpha GitHub project-template foundation. It is not a new coding agent or another mandatory orchestrator.
 
-No lock-in.
-No proprietary pricing.
-No required model or provider.
+## Principles
 
-Use Claude, Gemini, Qwen, OpenAI, local models, or future tools not yet invented.
+- Git owns accepted specs, implementation, code and decisions. GitHub Issues own work requests; PRs own proposed changes.
+- An executor may be Hermes, Codex, Claude Code, Gemini, OpenBot, or a future agent. All use the same task and evidence contracts.
+- Spec Kit is the primary optional spec-development workflow. Selected Superpowers skills improve implementation, not duplicate planning.
+- Scripts and independent GitHub checks provide evidence. Agents cannot approve their own implementation.
+- Use risk-appropriate fast, standard, and critical paths.
+- No Cloudflare, Paperclip, memory database, paid model, or hosted service required for the core.
 
-OAP is designed to outlive them all.
-﻿## Why This Workflow Exists
+## Start
 
-This project's workflow is modeled on the engineering practices developed by Boris Cherny, creator of Claude Code.
+1. Read PROJECT.md, ARCHITECTURE.md, POLICY.md and AGENTS.md.
+2. Install requirements-dev.txt and run python3 scripts/verify.py to verify **this template only**.
+3. Copy the template, replace the project placeholders, then initialize with python3 scripts/init_project.py --name sample --app-check python3 -m pytest -q (adjust for your stack).
+4. Open an issue with acceptance criteria and an appropriate risk tier. Work on a branch and submit a PR.
+5. Turn on required GitHub checks and default-branch protection in repository settings. A template cannot enable those policies itself.
 
-Claude Code demonstrated that the biggest productivity gains do not come from a single model or tool, but from disciplined structure around how agents think, plan, act, and verify work.
+## Directory map
 
-Key ideas adopted here:
+- sops/: risk-adaptive lifecycle, from research to release
+- contracts/: portable JSON schemas for agent execution and evidence
+- .agents/skills/: small reusable and reviewable skills
+- scripts/: deterministic verification, initialization and diagnostics
+- tests/: contract and rejection-path tests
+- docs/: architecture, component selection, interoperability, benchmarks, and skill security
+- .github/: issue, PR and CI conventions
 
-- Explicit planning before execution
-- Clear separation of roles rather than blended prompting
-- Shared, versioned memory of mistakes and constraints
-- Reusable workflows instead of repeated ad hoc instructions
-- Mandatory verification loops to close the feedback cycle
+## What is not claimed
 
-Claude Code implements these ideas through proprietary features such as CLAUDE.md, slash commands, subagents, permissions, and MCP integrations.
+Template self-tests are not application verification, production security certification, or benchmarks demonstrating productivity gains. Agent evidence is a claim until checked against the actual commit and CI result.
 
-This repository reimplements the same principles using plain files, folders, and conventions so they remain:
+This repository replaces a January-era methodology while retaining its history. It is a new design and deliberately does not inherit the old protocol as an architecture. The repository can be renamed and enabled as a template through GitHub Settings.
 
-- Model agnostic
-- Tool agnostic
-- Auditable in git
-- Shareable across teams
-- Durable over time
-
-Nothing in this workflow depends on a specific AI provider. Any capable model, whether accessed via VS Code, CLI, or web UI, can participate as long as it follows the structure.
-
-## Tools, Skills, and External Systems
-
-This repository treats tools and external systems as explicit capabilities rather than implicit magic.
-
-Reusable tool knowledge lives in:
-.ai/skills/
-
-Each skill describes:
-- what a tool is for
-- how it should be used
-- constraints and failure modes
-
-External systems such as version control, CI, databases, or messaging platforms are accessed through existing integrations (VS Code extensions, CLIs, APIs).
-
-This serves the same role as Claude Code’s MCP, but without binding the project to a specific protocol or provider.
-
-If a new tool or system is introduced, a corresponding skill should be documented.trae --
-
----
-
-## How This Maps to Claude Code
-
-Claude Code concept            This repository
-
-CLAUDE.md                      AGENT.md and RULES.md  
-Slash commands                 .ai/commands/  
-Subagents                      .ai/agents/  
-Claude Skills                  .ai/skills/  
-Compounding memory             .ai/memory/  
-Permission discipline          .ai/settings/  
-Plan mode before execution     planner.md role  
-Verification hooks             verifier.md role  
-
-The difference is that here the structure is explicit, visible, and editable by humans.
-
----
-
-## How to Use This as a Default Boilerplate
-
-This repository is intended to be copied as the starting point for new projects.
-
-When starting a new project:
-1. Update the first paragraph of this README
-2. Rewrite AGENT.md to describe the project and constraints
-3. Adjust planner.md and executor.md only if needed
-4. Begin recording mistakes and decisions in .ai/memory/
-
----
-
-## External Standards and Tooling
-
-This boilerplate interoperates with external agent standards and tooling.
-They are intentionally not vendored into each project repository.
-
-Upstream references:
-
-- agents.md  
-  https://github.com/BradKhan/agents.md  
-  Open agent and skill declaration standard used for interoperability.
-
-- OpenSkills  
-  https://github.com/BradKhan/open-skills  
-  Standardized, reusable skill definitions.
-
-- Gemini CLI  
-  https://github.com/BradKhan/gemini-cli  
-  Optional CLI interface for interacting with Gemini models.
-
-- Qwen Code  
-  https://github.com/BradKhan/qwen-code  
-  Optional coding focused model and workflow tooling.
-
-- Trae Agent  
-  https://github.com/BradKhan/trae-agent  
-  Experimental agent execution and orchestration tooling.
-
-Each project may:
-- reference these repositories directly
-- fork them if modifications are required
-- integrate selectively via `.ai/skills/` and agents.md compatibility
-
-No external repository is required for basic operation of this workflow.
-
----
-
-## Repository Structure
-
-- AGENT.md  
-  Canonical project context, constraints, and shared memory contract.
-
-- RULES.md  
-  Hard rules and enforcement boundaries.
-
-- agents.md  
-  Interoperability map for tools that understand agent and skill standards.
-
-- .ai/agents/  
-  Role definitions such as planner, executor, reviewer, verifier.
-
-- .ai/skills/  
-  Project specific and referenced skill documentation.
-
-- .ai/memory/  
-  Accumulated decisions, mistakes, and lessons.
-
----
-
-## Guardrails
-
-This boilerplate is intentionally minimal.
-
-Do not:
-- vendor upstream standards or tooling by default
-- duplicate skills across projects unnecessarily
-- bypass planning or verification discipline
-
-If structure feels heavy, simplify consciously rather than ignoring it.
-
----
-
-## How OAP Compares
-
-**Versus Claude Code**
-- Same planning and verification discipline
-- No proprietary tooling
-- No vendor pricing dependency
-- Fully auditable in git
-
-**Versus BMAD**
-- BMAD emphasizes roles and cadence
-- OAP emphasizes authority, intent, and verification
-- OAP avoids ceremony while preserving rigor
-
-**Versus Spec Kit**
-- Spec Kit focuses on artifacts
-- OAP focuses on workflow invariants and behavioral contracts
-- Specs emerge from intent, not the other way around
-
-Khan AIOS Open Agent Protocol subsumes these approaches by enforcing the underlying assumptions they rely on.
+Licensed under MIT. Third-party tools remain optional and carry their own licenses.

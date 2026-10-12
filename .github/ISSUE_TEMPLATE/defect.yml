@@ -1,0 +1,29 @@
+name: Defect
+description: Reproduce and correct an observed bug
+labels: [bug]
+body:
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+    validations:
+      required: true
+  - type: textarea
+    id: comparison
+    attributes:
+      label: Expected vs actual behavior
+    validations:
+      required: true
+  - type: dropdown
+    id: risk
+    attributes:
+      label: Risk class
+      options: [fast, standard, critical]
+    validations:
+      required: true
+  - type: textarea
+    id: regression
+    attributes:
+      label: Regression tests and evidence
+    validations:
+      required: true
