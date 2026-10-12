@@ -17,7 +17,7 @@ Open ASS provides a working **engineering control plane in a GitHub repository**
 
 ## Development cycle
 
-An issue holds accepted criteria. Classify its risk, prepare scoped agent context, work in an isolated branch, and run the app's actual tests. Submit a PR. A read-only `pull_request_target` job runs the PR risk checker from the trusted base commit, fetching the proposed commit **only as Git data**. It inspects risk declarations and sensitive changed paths without executing PR code. Rulesets still have to require this check. Independent review and required checks determine acceptance. The executor does not approve its own work.
+An issue holds accepted criteria. Classify its risk, prepare scoped agent context, work in an isolated branch, and run the app's actual tests. Submit a PR. A read-only ordinary-PR job runs the PR risk checker from the trusted base commit, fetching the proposed commit **only as Git data**. It inspects risk declarations and sensitive changed paths without executing PR code. Rulesets still have to require this check. Independent review and required checks determine acceptance. The executor does not approve its own work.
 
 ### Hooks
 
@@ -35,9 +35,11 @@ Nine roles are defined under `config/agents.json`; Claude Code project role file
 
 The built-in stdio server exposes only `openass_context_plan`, `openass_agent_plan` and `openass_skill_profiles`. It has no shell, arbitrary file read, GitHub write or network tool. Host tool permissions still matter. Other MCP services (GitHub, browser, docs, memory) should be connected deliberately with scoped credentials.
 
-### Public-repository Actions policy
+### Public repository PR checks
 
-As of October 2026, GitHub's public-repository policy for `pull_request_target` workflows is in evaluate mode and is scheduled for enforcement on **November 2, 2026**. The trusted-base PR gate uses this trigger without executing PR code. Repository administrators must explicitly assess and allow the trigger under GitHub Actions event policies before enforcement, or migrate to another independently protected mechanism. Do not require a check that the host policy prevents from running. See [GitHub's security documentation](https://docs.github.com/en/actions/reference/security/securely-using-pull_request_target).
+The policy job uses ordinary `pull_request` and checks out the trusted base commit before evaluating PR metadata and changed paths. It has only read access and never executes proposed application code. This avoids the elevated `pull_request_target` event and GitHub's November 2026 event restrictions.
+
+**Important:** the PR author can still edit the proposed workflow definition in their branch. Enforcement needs GitHub rulesets, independent review of workflow changes, and organization-required workflows where available. PR body risk declarations are not equivalent to owner approval.
 
 ### GitHub owner actions
 
