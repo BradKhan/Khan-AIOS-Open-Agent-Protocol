@@ -9,6 +9,7 @@ class AssuranceTests(unittest.TestCase):
         self.temp=tempfile.TemporaryDirectory()
         self.path=Path(self.temp.name)
         (self.path/'PROJECT.md').write_text('Name: Fixture\nUsers: Operators\nProblem: Validation\nOutcome: Verified build\n')
+        (self.path/'ARCHITECTURE.md').write_text('Context: Test backend\nComponents and boundaries: Local app\nInterfaces: HTTP\n')
         self.p=patch.object(verify,'ROOT',self.path)
         self.p.start()
     def tearDown(self):
