@@ -149,6 +149,16 @@ class PullRequestGateTests(unittest.TestCase):
         with self.assertRaises(pr_gate.GateError):
             pr_gate.required_risk([])
 
+    def test_critical_paths_cover_hooks_policies_and_supply_chain(self):
+        for p in (".githooks/pre-push", ".claude/agents/reviewer.md",
+                  ".github/CODEOWNERS", "integrations/skills.lock.json",
+                  "scripts/hermes_hook.py", "scripts/attest.py", "AGENTS.md"):
+            with self.subTest(p=p):
+                self.assertEqual(pr_gate.required_risk([p]), "critical")
+
+    def test_doc_only_stays_fast(self):
+        self.assertEqual(pr_gate.required_risk(["docs/example.md"]), "fast")
+
     def test_security_sensitive_path_requires_critical(self):
         self.assertEqual(pr_gate.required_risk([".github/workflows/test.yml"]), "critical")
         self.assertEqual(pr_gate.required_risk(["src/auth/session.py"]), "critical")

@@ -15,6 +15,7 @@ def fixture():
     blocked = b"#!/bin/sh\nexit 0\n"
     blobs = {
         "skills/sample-skill/SKILL.md": text,
+        "skills/sample-skill/LICENSE": b"MIT License; keep the notice with the skill.",
         "skills/sample-skill/reference/guide.md": reference,
         "skills/sample-skill/scripts/run.sh": blocked,
         "skills/sample-skill/scripts/data/huge-index.json": b"{}" * 500_000,
@@ -24,7 +25,9 @@ def fixture():
          "size": len(content), "sha": skills.blob_sha(content)}
         for path, content in blobs.items()
     ]
-    entries[2]["mode"] = "100755"
+    for entry in entries:
+        if entry["path"].endswith("/scripts/run.sh"):
+            entry["mode"] = "100755"
     commit = "a" * 40
     catalog = {"version": 1, "profiles": {"core": ["sample-skill"]},
                "skills": [{"id": "sample-skill", "source": "example/skills",
@@ -78,6 +81,27 @@ class SkillCatalogTests(unittest.TestCase):
             with self.subTest(name=name), self.assertRaises(skills.SkillError):
                 skills.check_path(name)
 
+    def test_reject_unclosed_frontmatter(self):
+        with self.assertRaisesRegex(skills.SkillError, "unclosed"):
+            skills.inspect_skill(b"---\nname: sample-skill\ndescription: valid\n", "sample-skill")
+
+    def test_reject_missing_description(self):
+        with self.assertRaisesRegex(skills.SkillError, "description"):
+            skills.inspect_skill(b"---\nname: sample-skill\n---\nHi\n", "sample-skill")
+
+    def test_reject_empty_body(self):
+        with self.assertRaisesRegex(skills.SkillError, "empty skill"):
+            skills.inspect_skill(b"---\nname: sample-skill\ndescription: valid\n---\n", "sample-skill")
+
+    def test_reject_overlong_description(self):
+        payload = ("---\nname: sample-skill\ndescription: " + "a"*1025 + "\n---\n# Instructions").encode()
+        with self.assertRaisesRegex(skills.SkillError, "description length"):
+            skills.inspect_skill(payload, "sample-skill")
+
+    def test_multiline_frontmatter_description(self):
+        skill = b"---\nname: sample-skill\ndescription: |\n  Writes a good\n  explanation.\n---\n# Do the thing"
+        self.assertTrue(skills.inspect_skill(skill, "sample-skill"))
+
     def test_reject_mismatched_frontmatter(self):
         with self.assertRaises(skills.SkillError):
             skills.inspect_skill(b"---\nname: different\n---\n", "sample-skill")
@@ -99,6 +123,7 @@ class SkillInstallerTests(unittest.TestCase):
         self.assertEqual(result, ["sample-skill"])
         root = self.root / ".agents/skills/sample-skill"
         self.assertTrue((root / "SKILL.md").exists())
+        self.assertIn("MIT License", (root / "LICENSE").read_text())
         self.assertTrue((root / "reference/guide.md").exists())
         self.assertFalse((root / "scripts/run.sh").exists())
         self.assertFalse((root / "scripts/data/huge-index.json").exists())
@@ -143,6 +168,15 @@ class SkillInstallerTests(unittest.TestCase):
         with self.assertRaisesRegex(skills.SkillError, "unmanaged"):
             skills.install(self.catalog["skills"], self.root, self.fetch)
         self.assertEqual((root / "SKILL.md").read_text(), "my work")
+
+    def test_refuses_symlinked_install_destination(self):
+        with tempfile.TemporaryDirectory() as dest:
+            base = self.root / ".agents"
+            base.mkdir()
+            (base / "skills").symlink_to(Path(dest), target_is_directory=True)
+            with self.assertRaisesRegex(skills.SkillError, "escapes repository or is a symlink"):
+                skills.install(self.catalog["skills"], self.root, self.fetch)
+            self.assertFalse((Path(dest) / "sample-skill").exists())
 
     def test_never_overwrites_installed_skill(self):
         skills.install(self.catalog["skills"], self.root, self.fetch)

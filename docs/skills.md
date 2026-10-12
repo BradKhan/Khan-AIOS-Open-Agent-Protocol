@@ -59,3 +59,11 @@ Document the source, exact upstream commit SHA, install path, license, task scop
 ## Runtime use
 
 A skill being pinned and installed does not mean a coding agent used it. Run `python3 scripts/agents.py plan designer` or inspect `openass_agent_plan` via MCP to see the role's intended skill selection and which instruction entrypoints are actually installed. The current router does not automatically execute any tool or agent. See [operating system](operating-system.md) and [harness integration](harnesses.md).
+
+## License preservation
+
+The installer now includes upstream top-level LICENSE, COPYING, and NOTICE files alongside pinned text instructions, where supplied. This matters for skill-specific licenses such as Anthropic's Apache-2.0 notices and Sentry's security review derived from OWASP CC BY-SA 4.0 reference material. Upstream sources without a clear license must be reviewed before redistribution; the Open ASS MIT license does not relicense third-party skills. The external `skills-ref` reference validator also runs after the CI smoke install.
+
+## Known nonportable upstream extension
+
+The Sentry `iterate-pr` skill uses `disable-model-invocation` in YAML frontmatter. This is a Claude-specific extension and is rejected by the reference portable Agent Skills validator. Open ASS preserves the pinned upstream file and documents the exception; it does **not** claim strict cross-harness compatibility for this skill. The CI validator permits this exact known deviation and rejects other unexpected violations. There is no silent rewriting of upstream instructions.

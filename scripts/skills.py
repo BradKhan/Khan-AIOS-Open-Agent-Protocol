@@ -18,6 +18,8 @@ from pathlib import Path, PurePosixPath
 ROOT = Path(__file__).resolve().parents[1]
 CATALOG = "integrations/skills.lock.json"
 ALLOWED_EXT = {".md", ".txt", ".json", ".yaml", ".yml", ".toml"}
+LICENSE_NAMES = {"LICENSE", "LICENSE.txt", "LICENSE.md", "COPYING", "COPYING.txt",
+                 "COPYING.md", "NOTICE", "NOTICE.txt", "NOTICE.md"}
 MAX_FILES = 180
 MAX_FILE = 512_000
 MAX_SKILL = 4_000_000
@@ -144,10 +146,12 @@ def remote_files(record, fetch, cache):
         # Instruction-only installation: never package upstream scripts, build assets,
         # large data bundles, or unrelated files just because they are text formats.
         first = relative.split("/", 1)[0]
-        if relative != "SKILL.md" and ("/" not in relative or first not in ("reference", "references", "rules", "agents", "examples")):
+        # Carry provenance and legal notices; never include scripts or executables.
+        is_license = "/" not in relative and relative in LICENSE_NAMES
+        if relative != "SKILL.md" and not is_license and ("/" not in relative or first not in ("reference", "references", "rules", "agents", "examples")):
             continue
         check_path(relative)
-        if entry.get("type") != "blob" or Path(relative).suffix.lower() not in ALLOWED_EXT:
+        if entry.get("type") != "blob" or (Path(relative).suffix.lower() not in ALLOWED_EXT and not is_license):
             continue
         if entry.get("mode") != "100644":
             continue  # Do not download symlinks or executable files.
@@ -165,22 +169,47 @@ def remote_files(record, fetch, cache):
 
 
 def inspect_skill(content, skill_id):
+    """Validate portable Agent Skills entrypoint metadata, not arbitrary YAML."""
     try:
         doc = content.decode("utf-8")
     except UnicodeDecodeError as exc:
         raise SkillError("SKILL.md is not UTF-8") from exc
     if not doc.startswith("---\n"):
         raise SkillError("missing skill metadata: " + skill_id)
-    header = doc[4:].split("\n---", 1)[0]
+    closing = re.search(r"(?m)^---\s*$", doc[4:])
+    if not closing:
+        raise SkillError("unclosed YAML frontmatter: " + skill_id)
+    header = doc[4:4 + closing.start()]
+    body = doc[4 + closing.end():]
+    if not body.strip():
+        raise SkillError("empty skill instructions: " + skill_id)
     names = re.findall(r"^name:\s*['\"]?([a-z][a-z0-9-]*)['\"]?\s*$", header, re.M)
-    if names != [skill_id]:
-        raise SkillError("upstream skill name mismatches catalog: " + skill_id)
+    if names != [skill_id] or len(skill_id) > 64 or skill_id.endswith("-"):
+        raise SkillError("invalid upstream skill name: " + skill_id)
+    descriptions = re.findall(r"^description:\s*(.*)$", header, re.M)
+    if len(descriptions) != 1:
+        raise SkillError("description missing or repeated in " + skill_id)
+    description = descriptions[0].strip().strip("'\"")
+    if description in ("|", ">", "|-", ">-", "|+", ">+"):
+        line = header.splitlines()
+        index = next(i for i, item in enumerate(line) if item.startswith("description:"))
+        continuation = []
+        for item in line[index + 1:]:
+            if not item.startswith((" ", "\t")):
+                break
+            continuation.append(item.strip())
+        description = " ".join(continuation)
+    if not description or len(description) > 1024:
+        raise SkillError("invalid skill description length: " + skill_id)
+    return True
 
 
 def audit(root=ROOT):
     manifest = load(root)
     current = {rec["id"]: rec for rec in manifest["skills"]}
     base = root / ".agents" / "skills"
+    if not base.resolve().is_relative_to(root.resolve()) or base.is_symlink():
+        raise SkillError("skill audit directory escapes repository or is a symlink")
     results = []
     if not base.exists():
         return results
@@ -220,6 +249,8 @@ def audit(root=ROOT):
 
 def install(records, root=ROOT, fetch=fetch_bytes):
     dest = root / ".agents" / "skills"
+    if not dest.resolve().is_relative_to(root.resolve()) or dest.is_symlink():
+        raise SkillError("skill install directory escapes repository or is a symlink")
     dest.mkdir(parents=True, exist_ok=True)
     installed = set(audit(root))
     for rec in records:

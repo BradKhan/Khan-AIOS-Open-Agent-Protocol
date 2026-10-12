@@ -22,12 +22,21 @@ def confined_file(root: Path, relative: str) -> Path:
     if not isinstance(relative, str) or not relative or "\\" in relative or "\x00" in relative:
         raise ContextError("unsafe context path")
     pure = PurePosixPath(relative)
+    parts = relative.split("/")
+    sensitive = {".git", ".env", ".ssh", ".aws", ".npmrc", ".pypirc",
+                 "id_rsa", "id_ed25519", "credentials.json", "secrets.json"}
+    if any(part in sensitive or part.startswith(".env.") and part != ".env.example"
+           for part in parts):
+        raise ContextError("private or credential-bearing context path denied")
     if pure.is_absolute() or any(x in (".", "..") for x in relative.split("/")) or ":" in pure.parts[0]:
         raise ContextError("path must be relative and may not traverse directories")
     parent = root.resolve()
     target = (parent / relative).resolve()
     if not target.is_relative_to(parent):
         raise ContextError("context reference escapes repository: " + relative)
+    if any(part in sensitive or part.startswith(".env.") and part != ".env.example"
+           for part in target.relative_to(parent).parts):
+        raise ContextError("private context target denied")
     if not target.is_file():
         raise ContextError("missing context reference: " + relative)
     return target

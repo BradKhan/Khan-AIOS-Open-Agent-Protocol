@@ -1,0 +1,43 @@
+name: quality
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  sdk-compatibility:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.11', '3.13']
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "${{ matrix.python-version }}"
+      - name: Install
+        run: python3 -m pip install --disable-pip-version-check -r requirements-dev.txt mcp==2.3.0
+      - name: Complete framework suite
+        run: python3 scripts/verify.py
+      - name: Official MCP SDK subprocess interoperability
+        run: python3 tests/sdk_mcp_smoke.py
+  actions-security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install pinned zizmor
+        run: python3 -m pip install --disable-pip-version-check zizmor==1.30.1
+      - name: Independently scan CI definitions for high-severity risks
+        run: zizmor --offline --min-severity high --format github .

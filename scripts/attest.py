@@ -21,6 +21,8 @@ def api_get(path, token=None):
         raise AttestError("unapproved GitHub API path")
     headers = {"Accept": "application/vnd.github+json", "User-Agent": "open-ass-evidence/1",
                "X-GitHub-Api-Version": "2022-11-28"}
+    if token is None:
+        token = os.environ.get("GITHUB_TOKEN")
     if token:
         headers["Authorization"] = "Bearer " + token
     req = urllib.request.Request("https://api.github.com" + path, headers=headers)
@@ -33,7 +35,11 @@ def api_get(path, token=None):
     return json.loads(raw)
 
 
-def evaluate(pull, checks, reviews, required, human_review=True):
+DEFAULT_REQUIRED = ("template-contracts", "pr-risk", "sdk-compatibility (3.11)",
+                    "sdk-compatibility (3.13)", "actions-security")
+
+
+def evaluate(pull, checks, reviews, required, human_review=True, trusted_app=None):
     if not isinstance(pull, dict) or pull.get("state") != "open":
         raise AttestError("PR must be open")
     head = pull.get("head", {}).get("sha")
@@ -44,6 +50,8 @@ def evaluate(pull, checks, reviews, required, human_review=True):
     found = {}
     for item in checks:
         if item.get("head_sha") != head:
+            continue
+        if trusted_app is not None and (item.get("app") or {}).get("slug") != trusted_app:
             continue
         name = item.get("name")
         if name not in found:  # GitHub returns newest runs first
@@ -83,19 +91,20 @@ def inspect(repo, number, checks, require_review=True, fetch=api_get):
     reviews = fetch(base + f"/pulls/{number}/reviews?per_page=100") if require_review else []
     if len(reviews) == 100 and require_review:
         raise AttestError("review results may be paginated; refusing incomplete attestation")
-    return evaluate(pr, runs["check_runs"], reviews, checks, require_review)
+    return evaluate(pr, runs["check_runs"], reviews, checks, require_review,
+                    trusted_app="github-actions")
 
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--repo", required=True)
     p.add_argument("--pr", type=int, required=True)
-    p.add_argument("--require", action="append", default=["template-contracts", "pr-risk"],
-                   help="Required job/check name; may be specified multiple times")
+    p.add_argument("--require", action="append", default=None,
+                   help="Override default required check names; supply each needed check")
     p.add_argument("--no-human-review", action="store_true", help="Diagnostic only; never authorizes merge")
     args = p.parse_args()
     try:
-        print(json.dumps(inspect(args.repo, args.pr, set(args.require),
+        print(json.dumps(inspect(args.repo, args.pr, set(args.require or DEFAULT_REQUIRED),
                                  not args.no_human_review), indent=2))
     except (AttestError, KeyError, ValueError, TypeError, urllib.error.URLError) as exc:
         print("attest: " + str(exc), file=sys.stderr)

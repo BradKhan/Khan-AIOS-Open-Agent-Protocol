@@ -53,6 +53,21 @@ class AttestTests(unittest.TestCase):
         with self.assertRaisesRegex(attest.AttestError,"paginated"):
             attest.inspect("BradKhan/open-ASS",14,{"template-contracts","pr-risk"},fetch=mocked)
 
+    def test_default_checks_cover_sdk_and_security(self):
+        self.assertIn("sdk-compatibility (3.11)", attest.DEFAULT_REQUIRED)
+        self.assertIn("sdk-compatibility (3.13)", attest.DEFAULT_REQUIRED)
+        self.assertIn("actions-security", attest.DEFAULT_REQUIRED)
+
+    def test_trusted_app_check_prevents_fake_check_name(self):
+        fake=dict(RUN, app={"slug": "untrusted-app"})
+        gate=dict(GATE, app={"slug": "github-actions"})
+        with self.assertRaisesRegex(attest.AttestError, "required checks"):
+            attest.evaluate(PR, [fake, gate], REV,
+                            {"template-contracts", "pr-risk"}, trusted_app="github-actions")
+        good=dict(RUN, app={"slug": "github-actions"})
+        self.assertEqual(attest.evaluate(PR,[good,gate],REV,{"template-contracts","pr-risk"},
+                         trusted_app="github-actions")["current_head_approvers"], ["reviewer"])
+
     def test_invalid_repo_is_rejected_before_api_access(self):
         with self.assertRaisesRegex(attest.AttestError,"invalid repository"):
             attest.inspect("../../secret",14,set(),fetch=lambda x: None)

@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
       - name: Validate catalog
@@ -25,3 +25,27 @@ jobs:
           python3 scripts/skills.py install --profile core --profile web --profile security --profile writing --profile authoring
       - name: Verify installed snapshots
         run: python3 scripts/skills.py audit
+      - name: Independently validate Agent Skills metadata
+        run: |
+          python3 -m pip install --disable-pip-version-check skills-ref==0.1.1
+          python3 - <<'PY'
+          from pathlib import Path
+          from skills_ref import validate
+          errors = []
+          for folder in sorted(Path(".agents/skills").iterdir()):
+              if (folder / "SKILL.md").is_file():
+                  issues = validate(folder)
+                  if issues:
+                      # Sentry iterate-pr deliberately uses a Claude-only metadata
+                      # extension. Keep the pinned source intact; never pretend it
+                      # conforms to the portable format.
+                      if (folder.name == "iterate-pr" and len(issues) == 1
+                              and "disable-model-invocation" in issues[0]):
+                          print("KNOWN NONPORTABLE EXTENSION: iterate-pr / disable-model-invocation")
+                          continue
+                      print(f"{folder}: {issues}")
+                      errors.append(folder.name)
+          if errors:
+              raise SystemExit("Non-standard skills: " + ", ".join(errors))
+          print("Agent Skills reference validation PASS")
+          PY

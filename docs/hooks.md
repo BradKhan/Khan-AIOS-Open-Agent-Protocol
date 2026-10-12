@@ -7,3 +7,10 @@ To use it, explicitly consent to the shell hook in your Hermes profile, copy the
 This is **heuristic defense in depth**. It cannot correctly interpret arbitrary shell commands, prevent every destructive operation, or replace an OS/container sandbox. A model can call other tools, and hook consent is scoped by Hermes. Unapproved hooks are skipped. For actual permissions use least-privileged tokens, filesystem/sandbox isolation, GitHub rulesets and independent review.
 
 No agent-level hooks are installed automatically. Ordinary Git hooks can be installed separately with `python3 scripts/openass.py hooks install`.
+
+## Protocol correction (October 2026)
+
+Hermes shell pre-tool hooks must return `{"action":"block","message":"..."}` to veto a call, **not** `{"decision":"block"}`. The earlier Open ASS hook returned the wrong shape and therefore provided no reliable veto. Contract tests now assert the documented shape using an actual stdin/stdout subprocess. The hook uses `cwd` to resolve sensitive relative and absolute paths; unknown paths request approval. The checks are deliberately heuristic and cannot replace filesystem isolation or a tool allowlist.
+
+Source: https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/features/hooks.md
+

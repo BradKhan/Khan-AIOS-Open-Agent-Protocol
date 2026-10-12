@@ -33,13 +33,7 @@ def check(root=ROOT):
         if "workflow_run:" in text:
             raise SecurityError("unsafe workflow-run trigger: " + path.name)
         if "pull_request_target:" in text:
-            if path.name != "pr-policy.yml":
-                raise SecurityError("unreviewed privileged PR trigger: " + path.name)
-            required = ("ref: ${{ github.event.pull_request.base.sha }}",
-                        "persist-credentials: false", "fetch-depth: 0",
-                        "python3 scripts/pr_gate.py")
-            if any(fragment not in text for fragment in required):
-                raise SecurityError("trusted PR gate may not run on proposed code: " + path.name)
+            raise SecurityError("privileged PR trigger forbidden: " + path.name)
         if not re.search(r"(?m)^permissions:\s*\n\s+contents:\s*read\s*$", text):
             raise SecurityError("workflow needs top-level least-privilege permissions: " + path.name)
         for match in re.findall(r"(?m)^\s*-\s*(?:name:.*\n\s+)?uses:\s*(\S+)", text):
