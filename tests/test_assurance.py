@@ -28,6 +28,17 @@ class AssuranceTests(unittest.TestCase):
         (self.path/'src').mkdir()
         (self.path/'src'/'app.py').write_text('pass')
         with self.assertRaisesRegex(RuntimeError,'source'): verify.verify_application({'initialized':False,'verification':{}})
+    def test_template_rejects_root_level_code(self):
+        (self.path/'app.py').write_text('print("application")')
+        with self.assertRaisesRegex(RuntimeError,'source'):
+            verify.verify_application({'initialized':False,'verification':{}})
+
+    def test_application_requires_architecture(self):
+        (self.path/'ARCHITECTURE.md').write_text('Context: [External systems and responsibilities]')
+        with patch.object(verify,'run'):
+            with self.assertRaisesRegex(RuntimeError,'ARCHITECTURE.md'):
+                verify.verify_application(self.config())
+
     def test_shell_string_rejected(self):
         with self.assertRaisesRegex(RuntimeError,'argv array'):
             verify.run('echo ok; rm -rf /','bad input')
