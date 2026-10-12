@@ -22,6 +22,17 @@ class ContextTests(unittest.TestCase):
         self.assertTrue(all(len(x["sha256"]) == 64 for x in files))
         self.assertEqual(item, context.plan("implement", ["examples/task.json"]))
 
+    def test_blocks_secret_paths_and_safe_aliases(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / ".env").write_text("SECRET=123")
+            (root / "README.md").write_text("fine")
+            (root / "alias").symlink_to(root / ".env")
+            for name in (".env", ".env.local", ".git/config", ".ssh/key", "alias"):
+                with self.subTest(path=name), self.assertRaises(context.ContextError):
+                    context.confined_file(root, name)
+            self.assertTrue(context.confined_file(root, "README.md").is_file())
+
     def test_rejects_path_escape(self):
         for path in ("../outside.txt", "/etc/passwd", "a/../../secret", r"a\\b"):
             with self.subTest(path=path), self.assertRaises(context.ContextError):
