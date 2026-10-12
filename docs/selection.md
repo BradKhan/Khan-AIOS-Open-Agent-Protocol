@@ -21,4 +21,6 @@ Decision factors: engineering usefulness, portability, maintained upstream, lice
 
 | File-oriented context organization | RinDig/Interpretable-Context-Methodology | **Core methodology**: five layers, canonical sources, bounded stage contracts and handoffs; adapt to AGENTS.md without vendoring upstream |
 
+The catalog now has a tested, pinned instruction-only installer: see [skills.md](skills.md) and [skills.lock.json](../integrations/skills.lock.json). 'Selected' is not synonymous with executable dependencies installed or harness compatibility verified. The instruction-only importer does not run scripts.
+
 Third-party popularity is not evidence of quality. Versions must be pinned before invoking executable packages or skills. No upstream code is vendored here.

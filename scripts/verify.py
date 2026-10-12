@@ -36,6 +36,7 @@ def verify_contracts():
         jsonschema.Draft202012Validator.check_schema(schema)
         jsonschema.validate(fixture,schema,format_checker=jsonschema.FormatChecker())
     run([sys.executable, 'scripts/context.py', 'check'], 'ICM context routing')
+    run([sys.executable, 'scripts/skills.py', 'check'], 'pinned skill catalog')
     print('[verify] documentation and schemas PASS')
 
 def detected_source():

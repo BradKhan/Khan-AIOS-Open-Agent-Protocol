@@ -1,0 +1,27 @@
+name: skill-source-smoke
+on:
+  pull_request:
+    paths:
+      - 'scripts/skills.py'
+      - 'integrations/skills.lock.json'
+      - 'tests/test_skills.py'
+      - '.github/workflows/skill-source-smoke.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  pinned-upstream-install:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Validate catalog
+        run: python3 scripts/skills.py check
+      - name: Fetch representative pinned upstream skills without executing them
+        run: |
+          python3 scripts/skills.py install --profile core --profile web --profile security --profile writing --profile authoring
+      - name: Verify installed snapshots
+        run: python3 scripts/skills.py audit

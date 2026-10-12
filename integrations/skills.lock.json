@@ -1,0 +1,171 @@
+{
+  "version": 1,
+  "description": "Pinned, instruction-only external Agent Skills. Installing does not execute upstream scripts.",
+  "profiles": {
+    "core": [
+      "systematic-debugging",
+      "test-driven-development",
+      "using-git-worktrees",
+      "verification-before-completion",
+      "find-bugs",
+      "iterate-pr"
+    ],
+    "web": [
+      "design-taste-frontend",
+      "impeccable",
+      "web-design-guidelines",
+      "vercel-react-best-practices",
+      "frontend-design",
+      "playwright-cli"
+    ],
+    "security": [
+      "security-review",
+      "gha-security-review",
+      "skill-scanner"
+    ],
+    "writing": [
+      "humanizer"
+    ],
+    "authoring": [
+      "skill-creator"
+    ]
+  },
+  "skills": [
+    {
+      "id": "systematic-debugging",
+      "source": "obra/superpowers",
+      "revision": "bb92a77741419a4ab5f06e711a283343f1ada0c3",
+      "directory": "skills/systematic-debugging",
+      "license": "MIT",
+      "description": "Root-cause debugging"
+    },
+    {
+      "id": "test-driven-development",
+      "source": "obra/superpowers",
+      "revision": "bb92a77741419a4ab5f06e711a283343f1ada0c3",
+      "directory": "skills/test-driven-development",
+      "license": "MIT",
+      "description": "Test-first implementation"
+    },
+    {
+      "id": "using-git-worktrees",
+      "source": "obra/superpowers",
+      "revision": "bb92a77741419a4ab5f06e711a283343f1ada0c3",
+      "directory": "skills/using-git-worktrees",
+      "license": "MIT",
+      "description": "Isolated branches and worktrees"
+    },
+    {
+      "id": "verification-before-completion",
+      "source": "obra/superpowers",
+      "revision": "bb92a77741419a4ab5f06e711a283343f1ada0c3",
+      "directory": "skills/verification-before-completion",
+      "license": "MIT",
+      "description": "Evidence before completion claims"
+    },
+    {
+      "id": "find-bugs",
+      "source": "getsentry/skills",
+      "revision": "d18b7aa8ba878354e5c348310230e652f7690f9c",
+      "directory": "skills/find-bugs",
+      "license": "Apache-2.0",
+      "description": "Bug finding and code review"
+    },
+    {
+      "id": "iterate-pr",
+      "source": "getsentry/skills",
+      "revision": "d18b7aa8ba878354e5c348310230e652f7690f9c",
+      "directory": "skills/iterate-pr",
+      "license": "Apache-2.0",
+      "description": "PR feedback and iteration"
+    },
+    {
+      "id": "design-taste-frontend",
+      "source": "Leonxlnx/taste-skill",
+      "revision": "d237dd399d57524945c0c81327da5da19f7a468d",
+      "directory": "skills/taste-skill",
+      "license": "MIT",
+      "description": "Distinctive landing and marketing page design"
+    },
+    {
+      "id": "impeccable",
+      "source": "pbakaus/impeccable",
+      "revision": "c63b8dd7dd5a5f3c32eaabe1af76d0694f863ed2",
+      "directory": ".agents/skills/impeccable",
+      "license": "Apache-2.0",
+      "description": "Frontend critique and design polish"
+    },
+    {
+      "id": "web-design-guidelines",
+      "source": "vercel-labs/agent-skills",
+      "revision": "063bee94c3f4df8453406c830b0a7df0f2860278",
+      "directory": "skills/web-design-guidelines",
+      "license": "upstream",
+      "description": "Web accessibility and UI review"
+    },
+    {
+      "id": "vercel-react-best-practices",
+      "source": "vercel-labs/agent-skills",
+      "revision": "063bee94c3f4df8453406c830b0a7df0f2860278",
+      "directory": "skills/react-best-practices",
+      "license": "MIT (skill metadata)",
+      "description": "React and Next.js performance"
+    },
+    {
+      "id": "frontend-design",
+      "source": "anthropics/skills",
+      "revision": "dbd4588f9e1033efb41dad4bef2f7947c8993d44",
+      "directory": "skills/frontend-design",
+      "license": "upstream",
+      "description": "Frontend design execution"
+    },
+    {
+      "id": "playwright-cli",
+      "source": "microsoft/playwright-cli",
+      "revision": "b85c7a736bb473bf55b584e54a09ffa698d6d871",
+      "directory": "skills/playwright-cli",
+      "license": "Apache-2.0",
+      "description": "Browser inspection and test workflow; CLI must be separately installed"
+    },
+    {
+      "id": "security-review",
+      "source": "getsentry/skills",
+      "revision": "d18b7aa8ba878354e5c348310230e652f7690f9c",
+      "directory": "skills/security-review",
+      "license": "upstream skill license; verify",
+      "description": "Security review of application code"
+    },
+    {
+      "id": "gha-security-review",
+      "source": "getsentry/skills",
+      "revision": "d18b7aa8ba878354e5c348310230e652f7690f9c",
+      "directory": "skills/gha-security-review",
+      "license": "Apache-2.0",
+      "description": "GitHub Actions security review"
+    },
+    {
+      "id": "skill-scanner",
+      "source": "getsentry/skills",
+      "revision": "d18b7aa8ba878354e5c348310230e652f7690f9c",
+      "directory": "skills/skill-scanner",
+      "license": "Apache-2.0",
+      "description": "Evaluate external skill instructions"
+    },
+    {
+      "id": "humanizer",
+      "source": "blader/humanizer",
+      "revision": "225a6f39ac85f76ee48dbad772ea4abe4ed6c9d8",
+      "directory": ".",
+      "license": "MIT",
+      "description": "Human editing of AI-sounding prose"
+    },
+    {
+      "id": "skill-creator",
+      "source": "anthropics/skills",
+      "revision": "dbd4588f9e1033efb41dad4bef2f7947c8993d44",
+      "directory": "skills/skill-creator",
+      "license": "upstream",
+      "description": "Skill authoring and evaluation methodology"
+    }
+  ]
+}
