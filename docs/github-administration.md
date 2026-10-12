@@ -27,3 +27,5 @@ python3 scripts/openass.py harness-check --harness hermes --strict
 Full authenticated task execution needs your provider credentials and host sandbox. A working local CLI is not proof of billing limits or semantic correctness.
 
 Social preview artwork still needs to be uploaded manually in GitHub Settings, because GitHub does not expose that feature through the supported repository API.
+
+Claude Code's `--max-turns` is documented but intentionally absent from the CLI `--help` output (Anthropic issue #16963). The executable contract check therefore validates visible flags and separately tests that the adapter retains the documented hidden turn limiter. No prompt is sent to authenticate this behavior in CI.
