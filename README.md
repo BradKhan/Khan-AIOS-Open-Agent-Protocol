@@ -69,6 +69,21 @@ We use complementary approaches without making you install every framework under
 
 The core works with repository files, Python, and GitHub. Additional integrations are optional. Support across individual agent harnesses is still being tested.
 
+## Install curated agent skills
+
+The template works without external skills. When you want more capability, choose a [curated profile](docs/skills.md) and install its **pinned, instruction-only** skill packages:
+
+```bash
+python3 scripts/skills.py list
+python3 scripts/skills.py plan --profile core --profile web
+python3 scripts/skills.py install --profile core --profile web
+python3 scripts/skills.py check
+```
+
+The web profile includes **Taste, Impeccable, Vercel Web Interface Guidelines, React best practices, Anthropic Frontend Design, and the Playwright CLI skill**. Core covers debugging, TDD, worktrees, review, and verification. Security, writing, and skill-authoring profiles are also available.
+
+No remote executable code runs during installation. The full tools and runtime integrations may require separate setup, and installing skills alone does not establish tested compatibility with Hermes, Codex, or another harness. See [how installation and provenance work](docs/skills.md).
+
 ## Get started
 
 Copy this repository into a GitHub project. If the repository owner has enabled **Template repository**, click **Use this template** to begin.
