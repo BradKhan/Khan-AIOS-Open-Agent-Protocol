@@ -29,6 +29,27 @@ class RoleTests(unittest.TestCase):
         self.assertEqual(agents.plan("reviewer")["mode"], "read")
         self.assertEqual(agents.plan("security-reviewer")["mode"], "read")
 
+    def test_context_bundle_contains_real_hashed_text(self):
+        import hashlib
+        b = agents.bundle("engineer", ["examples/task.json"], max_bytes=100000)
+        self.assertEqual(b["role"], "engineer")
+        self.assertGreater(b["bytes"], 0)
+        self.assertTrue(any(s["path"] == "AGENTS.md" for s in b["sources"]))
+        self.assertEqual(b, agents.bundle("engineer", ["examples/task.json"], max_bytes=100000))
+        self.assertTrue(all(hashlib.sha256(s["text"].encode()).hexdigest() == s["sha256"] for s in b["sources"]))
+
+    def test_context_bundle_budget_rejects_excess(self):
+        with self.assertRaisesRegex(agents.AgentError, "byte budget"):
+            agents.bundle("engineer", max_bytes=10)
+
+    def test_context_bundle_rejects_skill_outside_role(self):
+        with self.assertRaisesRegex(agents.AgentError, "not declared"):
+            agents.bundle("engineer", include_skills=["impeccable"])
+
+    def test_context_bundle_requires_installed_skill(self):
+        with self.assertRaisesRegex(agents.AgentError, "not installed"):
+            agents.bundle("designer", include_skills=["impeccable"])
+
     def test_unknown_role_rejected(self):
         with self.assertRaises(agents.AgentError):
             agents.plan("root-admin")

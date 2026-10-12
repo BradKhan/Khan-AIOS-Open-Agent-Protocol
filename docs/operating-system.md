@@ -23,6 +23,10 @@ An issue holds accepted criteria. Classify its risk, prepare scoped agent contex
 
 Opt-in `.githooks/pre-commit` checks framework routing, skill integrity, roles and static security; `pre-push` additionally runs `verify.py`. An existing custom hooks directory is never replaced. Local hooks can be bypassed: GitHub rulesets are the enforcement boundary.
 
+### Scoped, consumable context bundles
+
+Run `python3 scripts/openass.py agents bundle engineer --working examples/task.json --max-bytes 64000` to emit the actual selected UTF-8 context with source hashes as JSON. Include a role-approved, installed skill only when needed: `--include-skill systematic-debugging`. The command fails rather than silently truncating a byte budget. It does not give the model new authority; verify all task files and skill instructions against policy. Avoid logging bundles containing private project material in public CI.
+
 ### Roles and skills
 
 Nine roles are defined under `config/agents.json`; Claude Code project role files live under `.claude/agents/`. `agents plan` produces a context handoff and marks missing skills; it does not execute agents or grant authorization. The 17 upstream skill packages are opt-in, version-pinned **text**, not full runnable toolchains.

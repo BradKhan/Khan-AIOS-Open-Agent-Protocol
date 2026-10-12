@@ -27,6 +27,7 @@ Install only useful skills:
 python3 scripts/openass.py skills plan --profile core --profile web
 python3 scripts/openass.py skills install --profile core --profile web
 python3 scripts/openass.py agents plan designer
+python3 scripts/openass.py agents bundle engineer --working examples/task.json --max-bytes 64000
 ```
 
 Claude Code can use `.claude/agents/` and `.mcp.json`; Codex reads `AGENTS.md` and can use `.codex/config.toml`. See [harnesses](harnesses.md) for the limitations and Hermes.
