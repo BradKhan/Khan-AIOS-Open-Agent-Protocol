@@ -17,13 +17,14 @@ def fixture():
         "skills/sample-skill/SKILL.md": text,
         "skills/sample-skill/reference/guide.md": reference,
         "skills/sample-skill/scripts/run.sh": blocked,
+        "skills/sample-skill/scripts/data/huge-index.json": b"{}" * 500_000,
     }
     entries = [
         {"path": path, "type": "blob", "mode": "100644",
          "size": len(content), "sha": skills.blob_sha(content)}
         for path, content in blobs.items()
     ]
-    entries[-1]["mode"] = "100755"
+    entries[2]["mode"] = "100755"
     commit = "a" * 40
     catalog = {"version": 1, "profiles": {"core": ["sample-skill"]},
                "skills": [{"id": "sample-skill", "source": "example/skills",
@@ -100,6 +101,7 @@ class SkillInstallerTests(unittest.TestCase):
         self.assertTrue((root / "SKILL.md").exists())
         self.assertTrue((root / "reference/guide.md").exists())
         self.assertFalse((root / "scripts/run.sh").exists())
+        self.assertFalse((root / "scripts/data/huge-index.json").exists())
         self.assertEqual(skills.audit(self.root), ["sample-skill"])
         stamp = json.loads((root / ".open-ass-source.json").read_text())
         self.assertEqual(stamp["revision"], "a" * 40)
