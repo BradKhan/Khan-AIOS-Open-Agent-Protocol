@@ -28,9 +28,14 @@ def command(harness,mode):
         result=["claude","-p","--output-format","json","--max-turns","16"]
         if mode=="read":result+=["--permission-mode","plan"]
         return result
-    result=["hermes","chat","--oneshot","--query-file","-"]
-    if mode=="read":result+=["--safe-mode"]
-    else:result+=["--worktree"]
+    # Hermes --safe-mode removes AGENTS.md, hooks, skills and MCP. Never use
+    # it as a read-only policy! Constrain tools and host sandbox separately.
+    result=["hermes","chat","--oneshot","--query-file","-",
+            "--format","stream-json","--max-turns","16"]
+    if mode=="read":
+        result+=["--toolsets","skills"]
+    else:
+        result+=["--worktree","--checkpoints"]
     return result
 
 def make_prompt(role,working=(),include_skills=(),root=ROOT,budget=64000):
