@@ -18,7 +18,7 @@ python3 scripts/openass.py github-admin --repo BradKhan/open-ASS --apply --confi
 
 CI checks to require are: `template-contracts`, `pr-risk`, `sdk-compatibility (3.11)`, `sdk-compatibility (3.13)`, `actions-security`, `browser-fixtures`, and `harness-cli`. The browser workflow now runs on every PR so a required status never disappears on docs-only changes.
 
-The separate `harness-cli-compatibility` workflow installs pinned upstream **Codex 0.162.1** and **Claude Code 2.1.296** in an ephemeral credential-free runner and validates their **real help and version output**. It never sends prompts or authenticates inference. Hermes's CLI flags were cross-checked against the upstream Hermes v0.21.x parser and docs; users with a local Hermes installation can validate it by running:
+The separate `harness-cli-compatibility` workflow installs pinned upstream **Codex 0.162.1** and **Claude Code 2.1.296** in an ephemeral credential-free runner. Claude's npm package requires a post-install step to place its native binary; CI deliberately permits that install script in this unprivileged, isolated job and validates their **real help and version output**. It never sends prompts or authenticates inference. Hermes's CLI flags were cross-checked against the upstream Hermes v0.21.x parser and docs; users with a local Hermes installation can validate it by running:
 
 ```bash
 python3 scripts/openass.py harness-check --harness hermes --strict
