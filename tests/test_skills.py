@@ -169,6 +169,15 @@ class SkillInstallerTests(unittest.TestCase):
             skills.install(self.catalog["skills"], self.root, self.fetch)
         self.assertEqual((root / "SKILL.md").read_text(), "my work")
 
+    def test_refuses_symlinked_install_destination(self):
+        with tempfile.TemporaryDirectory() as dest:
+            base = self.root / ".agents"
+            base.mkdir()
+            (base / "skills").symlink_to(Path(dest), target_is_directory=True)
+            with self.assertRaisesRegex(skills.SkillError, "escapes repository or is a symlink"):
+                skills.install(self.catalog["skills"], self.root, self.fetch)
+            self.assertFalse((Path(dest) / "sample-skill").exists())
+
     def test_never_overwrites_installed_skill(self):
         skills.install(self.catalog["skills"], self.root, self.fetch)
         with self.assertRaisesRegex(skills.SkillError, "already installed"):
