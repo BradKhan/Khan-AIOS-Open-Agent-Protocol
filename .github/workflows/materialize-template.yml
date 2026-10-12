@@ -1,0 +1,35 @@
+name: Materialize Agent Engineering Template
+on:
+  push:
+    branches: [agent-engineering-v0.2]
+permissions:
+  contents: write
+jobs:
+  materialize:
+    if: github.repository == 'BradKhan/Khan-AIOS-Open-Agent-Protocol'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Expand reviewed template bundle and replace legacy tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! -f publish-source.tar.xz ]]; then echo 'Waiting for reviewed source bundle'; exit 0; fi
+          mkdir -p "$RUNNER_TEMP/staging"
+          tar -xJf publish-source.tar.xz -C "$RUNNER_TEMP/staging"
+          python3 - <<'PY'
+          import pathlib,shutil
+          root=pathlib.Path('.')
+          for item in root.iterdir():
+              if item.name == '.git':
+                  continue
+              if item.is_dir() and not item.is_symlink():
+                  shutil.rmtree(item)
+              else:
+                  item.unlink()
+          PY
+          cp -a "$RUNNER_TEMP/staging/." .
+          git add -A
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "feat: publish portable agent engineering template v0.2"
+          git push origin HEAD:agent-engineering-v0.2
