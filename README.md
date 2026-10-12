@@ -132,6 +132,22 @@ python3 scripts/openass.py quality plan
 python3 scripts/openass.py evaluate
 ```
 
+The task runner now supervises actual CLI processes, records heartbeats, permits cancellation/recovery, and verifies usage where the provider reports it. It refuses dirty checkouts and never treats a model's exit code as GitHub approval.
+
+For an already-approved task with a budget:
+
+```bash
+python3 scripts/openass.py run run TASK-ID --harness codex --role engineer --actor worker --reserve-cents 100
+```
+
+That's a preview. To authorize a real run, append `--execute --ack-unmetered`; see [supervision and cost boundaries](docs/supervisor.md). You can also check a runtime with a disposable coding fixture:
+
+```bash
+python3 scripts/openass.py live-smoke --harness claude
+```
+
+The smoke command is also dry-run-first. Real, authenticated runs need your own CLI account; see [live agent testing](docs/live-smoke.md). To inspect and enable the GitHub owner settings, see [repository administration](docs/github-administration.md). The connected GitHub integration cannot turn those settings on from this chat.
+
 Harness commands are **dry-run-first**, and third-party tools may need their own installation. A local task lifecycle, read-only MCP server, browser evidence gate and GitHub attestation tool are included. Neither code generation nor a green template test substitutes for verified application behavior or authorized review.
 
 [Quickstart](docs/quickstart.md) · [Skills](docs/skills.md) · [Agent harnesses](docs/harness-runtime.md) · [Task lifecycle](docs/lifecycle.md) · [Product quality](docs/product-quality.md) · [Release evaluations](docs/release-evaluation.md)
