@@ -32,11 +32,12 @@ class AdminTests(unittest.TestCase):
         calls=[]
         def fake(method,path,body=None,token=None):
             calls.append((method,path,body,token))
+            if method=="GET":return [{"login":"independent","permissions":{"push":True}}]
             return {"id":1}
         result=admin.apply(REPO,p,"secure-token",request=fake)
-        self.assertEqual([x[0] for x in calls],["PATCH","PUT","POST"])
-        self.assertTrue(calls[0][2]["is_template"])
-        self.assertTrue(calls[2][1].endswith("/rulesets"))
+        self.assertEqual([x[0] for x in calls],["GET","PATCH","PUT","POST"])
+        self.assertTrue(calls[1][2]["is_template"])
+        self.assertTrue(calls[3][1].endswith("/rulesets"))
         self.assertTrue(all(x[3]=="secure-token" for x in calls))
         self.assertEqual(len(result),3)
     def test_existing_ruleset_updates_by_id(self):
@@ -44,9 +45,23 @@ class AdminTests(unittest.TestCase):
                      [{"name":admin.RULESET_NAME,"id":42}])
         self.assertEqual(p["changes"]["ruleset_action"],"update")
         calls=[]
-        admin.apply(REPO,p,"token",request=lambda *a,**kw:calls.append((a,kw)))
+        def fake(*a,**kw):
+            calls.append((a,kw))
+            if a[0]=="GET":return [{"login":"independent","permissions":{"push":True}}]
+            return {}
+        admin.apply(REPO,p,"token",request=fake)
         self.assertEqual(calls[-1][0][0],"PUT")
         self.assertTrue(calls[-1][0][1].endswith("/rulesets/42"))
+    def test_refuse_lockout_without_independent_reviewer(self):
+        p=admin.plan(REPO,META,[])
+        calls=[]
+        def fake(method,path,body=None,token=None):
+            calls.append(method)
+            return [{"login":"BradKhan","permissions":{"push":True}}]
+        with self.assertRaisesRegex(admin.AdminError,"no distinct write-access reviewer"):
+            admin.apply(REPO,p,"token",request=fake)
+        self.assertEqual(calls,["GET"])
+
     def test_reject_wrong_repository(self):
         with self.assertRaises(admin.AdminError):
             admin.plan(REPO,dict(META,full_name="intruder/evil"),[])
