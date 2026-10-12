@@ -208,6 +208,8 @@ def audit(root=ROOT):
     manifest = load(root)
     current = {rec["id"]: rec for rec in manifest["skills"]}
     base = root / ".agents" / "skills"
+    if not base.resolve().is_relative_to(root.resolve()) or base.is_symlink():
+        raise SkillError("skill audit directory escapes repository or is a symlink")
     results = []
     if not base.exists():
         return results
@@ -247,6 +249,8 @@ def audit(root=ROOT):
 
 def install(records, root=ROOT, fetch=fetch_bytes):
     dest = root / ".agents" / "skills"
+    if not dest.resolve().is_relative_to(root.resolve()) or dest.is_symlink():
+        raise SkillError("skill install directory escapes repository or is a symlink")
     dest.mkdir(parents=True, exist_ok=True)
     installed = set(audit(root))
     for rec in records:
