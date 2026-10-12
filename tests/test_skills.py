@@ -78,6 +78,27 @@ class SkillCatalogTests(unittest.TestCase):
             with self.subTest(name=name), self.assertRaises(skills.SkillError):
                 skills.check_path(name)
 
+    def test_reject_unclosed_frontmatter(self):
+        with self.assertRaisesRegex(skills.SkillError, "unclosed"):
+            skills.inspect_skill(b"---\nname: sample-skill\ndescription: valid\n", "sample-skill")
+
+    def test_reject_missing_description(self):
+        with self.assertRaisesRegex(skills.SkillError, "description"):
+            skills.inspect_skill(b"---\nname: sample-skill\n---\nHi\n", "sample-skill")
+
+    def test_reject_empty_body(self):
+        with self.assertRaisesRegex(skills.SkillError, "empty skill"):
+            skills.inspect_skill(b"---\nname: sample-skill\ndescription: valid\n---\n", "sample-skill")
+
+    def test_reject_overlong_description(self):
+        payload = ("---\nname: sample-skill\ndescription: " + "a"*1025 + "\n---\n# Instructions").encode()
+        with self.assertRaisesRegex(skills.SkillError, "description length"):
+            skills.inspect_skill(payload, "sample-skill")
+
+    def test_multiline_frontmatter_description(self):
+        skill = b"---\nname: sample-skill\ndescription: |\n  Writes a good\n  explanation.\n---\n# Do the thing"
+        self.assertTrue(skills.inspect_skill(skill, "sample-skill"))
+
     def test_reject_mismatched_frontmatter(self):
         with self.assertRaises(skills.SkillError):
             skills.inspect_skill(b"---\nname: different\n---\n", "sample-skill")

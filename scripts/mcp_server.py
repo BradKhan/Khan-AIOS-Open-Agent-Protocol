@@ -7,6 +7,8 @@ boundary: the host must still constrain tool/agent permissions.
 import json
 import sys
 
+MAX_LINE = 1_048_576
+
 try:
     from scripts import agents, context, skills
 except ModuleNotFoundError:
@@ -26,6 +28,10 @@ TOOLS = [
      "inputSchema": {"type": "object", "properties": {}, "additionalProperties": False}}
 ]
 
+for tool in TOOLS:
+    tool["annotations"] = {"readOnlyHint": True, "destructiveHint": False,
+                           "idempotentHint": True, "openWorldHint": False}
+
 
 def handle(request):
     if not isinstance(request, dict) or request.get("jsonrpc") != "2.0":
@@ -37,6 +43,9 @@ def handle(request):
     if not isinstance(params, dict):
         raise ValueError("invalid request parameters")
     if method == "initialize":
+        requested = params.get("protocolVersion")
+        if requested is not None and not isinstance(requested, str):
+            raise ValueError("protocolVersion must be a string")
         return {"protocolVersion": VERSION, "capabilities": {"tools": {"listChanged": False}},
                 "serverInfo": {"name": "open-ass", "version": "0.4.0"}}
     if method == "ping":
@@ -74,32 +83,60 @@ def _working(value):
 
 
 def dispatch(request):
-    if not isinstance(request, dict):
+    if not isinstance(request, dict) or request.get("jsonrpc") != "2.0" or not isinstance(request.get("method"), str):
         return {"jsonrpc": "2.0", "id": None, "error": {"code": -32600, "message": "Invalid Request"}}
     if "id" not in request:
         return None  # notifications must not generate a response
+    if request["id"] is None or isinstance(request["id"], bool) or not isinstance(request["id"], (str, int)):
+        return {"jsonrpc": "2.0", "id": None, "error": {"code": -32600, "message": "Invalid request id"}}
     request_id = request["id"]
     try:
         return {"jsonrpc": "2.0", "id": request_id, "result": handle(request)}
     except (ValueError, KeyError, TypeError, OSError, context.ContextError, agents.AgentError, skills.SkillError) as e:
-        return {"jsonrpc": "2.0", "id": request_id, "error": {"code": -32602, "message": str(e)}}
+        message = str(e)
+        code = -32601 if message.startswith("method not found: ") else -32602
+        return {"jsonrpc": "2.0", "id": request_id, "error": {"code": code, "message": message}}
 
 
 def serve(source=sys.stdin, destination=sys.stdout):
-    for line in source:
-        if len(line) > 1_048_576:
-            destination.write(json.dumps({"jsonrpc": "2.0", "id": None, "error":
-                                          {"code": -32600, "message": "Request too large"}}) + "\n")
-            destination.flush()
-            continue
-        try:
-            request = json.loads(line)
-            result = dispatch(request)
-        except (ValueError, TypeError, json.JSONDecodeError):
-            result = {"jsonrpc": "2.0", "id": None,
-                      "error": {"code": -32700, "message": "Invalid JSON"}}
-        if result is not None:
-            destination.write(json.dumps(result, separators=(",", ":")) + "\n")
+    """Legacy MCP 2025-06-18 lifecycle; strict one-line JSON-RPC stdio."""
+    initialized = False
+    awaiting_confirmation = False
+    while True:
+        line = source.readline(MAX_LINE + 1)
+        if not line:
+            break
+        if len(line) > MAX_LINE:
+            while not line.endswith("\n"):
+                line = source.readline(MAX_LINE + 1)
+                if not line:
+                    break
+            response = {"jsonrpc": "2.0", "id": None,
+                        "error": {"code": -32600, "message": "Request too large"}}
+        else:
+            try:
+                request = json.loads(line)
+                method = request.get("method") if isinstance(request, dict) else None
+                if method == "initialize":
+                    response = dispatch(request)
+                    awaiting_confirmation = "result" in response
+                elif method == "notifications/initialized":
+                    if awaiting_confirmation and isinstance(request, dict) and request.get("jsonrpc") == "2.0":
+                        initialized = True
+                    response = None
+                elif not initialized:
+                    if isinstance(request, dict) and "id" not in request:
+                        response = None
+                    else:
+                        response = {"jsonrpc": "2.0", "id": request.get("id") if isinstance(request, dict) else None,
+                                    "error": {"code": -32000, "message": "MCP initialize handshake required"}}
+                else:
+                    response = dispatch(request)
+            except (ValueError, TypeError, json.JSONDecodeError):
+                response = {"jsonrpc": "2.0", "id": None,
+                            "error": {"code": -32700, "message": "Invalid JSON"}}
+        if response is not None:
+            destination.write(json.dumps(response, separators=(",", ":")) + "\n")
             destination.flush()
 
 

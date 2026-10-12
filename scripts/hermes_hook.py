@@ -1,44 +1,64 @@
 #!/usr/bin/env python3
-"""Optional Hermes pre_tool_call guard (defense in depth, not a sandbox).
+"""Opt-in Hermes pre_tool_call shell hook, following Hermes's documented wire format.
 
-Consumes Hermes JSON hook payload on stdin and emits a documented hook directive.
-Install only with explicit user consent and fail_closed: true.
+Heuristic defense in depth. Hooks are NOT a sandbox and may be bypassed.
 """
 import json
+import posixpath
 import re
 import sys
 
 MAX_REQUEST = 100_000
-SENSITIVE = (".github/workflows/", "POLICY.md", "SECURITY.md", "config/",
-             "scripts/verify.py", "scripts/pr_gate.py", ".mcp.json")
-DANGEROUS = [
-    re.compile(r"\bgit\s+push\b[^\n;]*\s--force(?:\s|=|$)"),
-    re.compile(r"\bgit\s+push\b[^\n;]*\s-f(?:\s|$)"),
-    re.compile(r"\bgit\s+reset\s+--hard\b"),
+SENSITIVE = frozenset({"POLICY.md", "SECURITY.md", "AGENTS.md", ".mcp.json",
+                       "scripts/verify.py", "scripts/pr_gate.py",
+                       "scripts/hermes_hook.py", "scripts/security_baseline.py"})
+SENSITIVE_DIRS = ("config/", ".github/workflows/", ".claude/", ".codex/")
+DANGEROUS = (
+    re.compile(r"\bgit\s+push\b[^\n;]*\s--force(?:\s|=|$)", re.I),
+    re.compile(r"\bgit\s+push\b[^\n;]*\s-f(?:\s|$)", re.I),
+    re.compile(r"\bgit\s+reset\s+--hard(?:\s|$)", re.I),
     re.compile(r"\brm\s+-[a-z]*r[a-z]*f[a-z]*\s+/(?:\s|$|[;&|])", re.I),
     re.compile(r"(?:\bcurl\b|\bwget\b)[^\n|]*\|\s*(?:bash|sh)\b", re.I)
-]
+)
+
+
+def block(message):
+    return {"action": "block", "message": message}
+
+
+def normalize_path(path, cwd):
+    """Relative or absolute path inside cwd; None when ownership is ambiguous."""
+    if not isinstance(path, str) or not path or "\0" in path or "\\" in path:
+        return None
+    if not isinstance(cwd, str) or not cwd.startswith("/"):
+        return None
+    base = posixpath.normpath(cwd)
+    absolute = posixpath.normpath(path if path.startswith("/") else posixpath.join(base, path))
+    if absolute == base:
+        return ""
+    if not absolute.startswith(base.rstrip("/") + "/"):
+        return None
+    return absolute[len(base.rstrip("/")) + 1:]
 
 
 def decision(payload):
     if not isinstance(payload, dict) or payload.get("hook_event_name") != "pre_tool_call":
-        return {"decision": "block", "reason": "Malformed or non-pre-tool hook payload"}
-    tool = payload.get("tool_name")
-    arguments = payload.get("tool_input")
+        return block("Invalid Hermes pre_tool_call payload")
+    tool, arguments = payload.get("tool_name"), payload.get("tool_input")
     if not isinstance(tool, str) or not isinstance(arguments, dict):
-        return {"decision": "block", "reason": "Missing tool information"}
+        return block("Missing Hermes tool information")
     if tool == "terminal":
         command = arguments.get("command")
         if not isinstance(command, str):
-            return {"decision": "block", "reason": "Unknown shell command"}
+            return block("Missing terminal command")
         if any(pattern.search(command) for pattern in DANGEROUS):
-            return {"decision": "block", "reason": "Destructive shell command requires out-of-band authorization"}
-    if tool in ("write_file", "patch"):
-        path = arguments.get("path") or arguments.get("file_path")
-        if not isinstance(path, str):
-            return {"action": "approve", "message": "Unknown write path; obtain explicit approval"}
-        if any(path == item or path.startswith(item) for item in SENSITIVE):
-            return {"action": "approve", "message": "Sensitive repository policy path; obtain explicit owner approval"}
+            return block("Potentially destructive command; obtain out-of-band authorization")
+    if tool in {"write_file", "patch"}:
+        raw = arguments.get("path", arguments.get("file_path"))
+        # Unknown cwd or ambiguous paths are escalated rather than permitted.
+        path = normalize_path(raw, payload.get("cwd"))
+        if path is None or path in SENSITIVE or path.startswith(SENSITIVE_DIRS):
+            return {"action": "approve", "message": "Sensitive or ambiguous write; obtain explicit human approval"}
     return {}
 
 
@@ -46,11 +66,10 @@ def main():
     try:
         raw = sys.stdin.buffer.read(MAX_REQUEST + 1)
         if len(raw) > MAX_REQUEST:
-            raise ValueError("Hook request too large")
-        data = json.loads(raw)
-        print(json.dumps(decision(data)))
+            raise ValueError("oversized hook input")
+        print(json.dumps(decision(json.loads(raw))))
     except (ValueError, TypeError, UnicodeError):
-        print(json.dumps({"decision": "block", "reason": "Cannot evaluate tool request"}))
+        print(json.dumps(block("Could not parse Hermes hook request")))
 
 
 if __name__ == "__main__":
