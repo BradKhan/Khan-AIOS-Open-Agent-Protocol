@@ -95,17 +95,17 @@ Copy or fork the repository into a project.
 
 Install the development requirements and verify the foundation:
 
-\`python3 -m pip install -r requirements-dev.txt\`
+`python3 -m pip install -r requirements-dev.txt`
 
-\`python3 scripts/verify.py\`
+`python3 scripts/verify.py`
 
 See which skills are available:
 
-\`python3 scripts/skills.py list\`
+`python3 scripts/skills.py list`
 
 Install the core engineering and web/design profiles:
 
-\`python3 scripts/skills.py install --profile core --profile web\`
+`python3 scripts/skills.py install --profile core --profile web`
 
 Configure your project's actual application tests before relying on the framework to verify its behavior.
 
