@@ -1,0 +1,36 @@
+name: Feature
+description: Define user-observable behavior and verification
+labels: [enhancement]
+body:
+  - type: textarea
+    id: outcome
+    attributes:
+      label: User-observable outcome
+      description: What should change and for whom?
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      placeholder: "- [ ] Given ..., when ..., then ..."
+    validations:
+      required: true
+  - type: dropdown
+    id: risk
+    attributes:
+      label: Risk class
+      options: [fast, standard, critical]
+    validations:
+      required: true
+  - type: textarea
+    id: references
+    attributes:
+      label: Canonical spec and constraints
+      description: Link specs rather than copying diverging versions.
+  - type: textarea
+    id: verification
+    attributes:
+      label: Reproducible verification
+    validations:
+      required: true

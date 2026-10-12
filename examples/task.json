@@ -1,0 +1,16 @@
+{
+  "version": "0.2",
+  "canonical_issue": "example-org/example-project#42",
+  "risk": "standard",
+  "intent": "Build a safe idempotent GitHub issue intake operation",
+  "spec_path": "specs/issue-intake.md",
+  "acceptance": [
+    "Duplicate webhook deliveries create one task",
+    "Failed calls return structured errors",
+    "All work remains traceable to the original issue"
+  ],
+  "max_attempts": 3,
+  "budget_usd": 0.5,
+  "executor": "hermes",
+  "base_sha": null
+}
