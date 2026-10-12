@@ -35,6 +35,10 @@ Nine roles are defined under `config/agents.json`; Claude Code project role file
 
 The built-in stdio server exposes only `openass_context_plan`, `openass_agent_plan` and `openass_skill_profiles`. It has no shell, arbitrary file read, GitHub write or network tool. Host tool permissions still matter. Other MCP services (GitHub, browser, docs, memory) should be connected deliberately with scoped credentials.
 
+### Public-repository Actions policy
+
+As of October 2026, GitHub's public-repository policy for `pull_request_target` workflows is in evaluate mode and is scheduled for enforcement on **November 2, 2026**. The trusted-base PR gate uses this trigger without executing PR code. Repository administrators must explicitly assess and allow the trigger under GitHub Actions event policies before enforcement, or migrate to another independently protected mechanism. Do not require a check that the host policy prevents from running. See [GitHub's security documentation](https://docs.github.com/en/actions/reference/security/securely-using-pull_request_target).
+
 ### GitHub owner actions
 
 Set **Template repository** on. Add appropriate topics. Set a default-branch ruleset to require `template-contracts` and `pr-risk` plus application checks, at least one authorized independent reviewer, review dismissal on updates, and restricted bypass/force-push rights. This configuration cannot be imposed by a copied repository or the current GitHub connector.
