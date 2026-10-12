@@ -13,6 +13,11 @@ class CompatTests(unittest.TestCase):
         for name in h.FLAGS:
             with self.subTest(name=name):
                 self.assertEqual(h.probe(name,runner=faked,locator=lambda x:x)["status"],"pass")
+    def test_claude_hidden_turn_limit_does_not_fail_help_probe(self):
+        self.assertNotIn("--max-turns",h.FLAGS["claude"][1])
+        from scripts import harness
+        self.assertIn("--max-turns",harness.command("claude","write-branch"))
+
     def test_absent_flags_rejected(self):
         def missing(args,**kw):return subprocess.CompletedProcess(args,0,"--help","")
         self.assertEqual(h.probe("hermes",runner=missing,locator=lambda n:n)["status"],"incompatible")
