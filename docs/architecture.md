@@ -22,3 +22,7 @@ An agent may submit evidence JSON, but self-reported green checks are not truste
 ## Limits
 
 No database, model API, hosted coordination, prompt-evaluation service, or special skills installer is required for the default template. Compatibility claims require test runs against named harness revisions.
+
+## Interpretable context (ICM)
+
+The core's context architecture follows ICM's orientation → routing → stage → canonical references → working artifacts layers. The only authoritative routing registry is `context/routes.json`; `CONTEXT.md` is its human entrypoint. Each stage declares Inputs, Process, Outputs, Permissions, and References. This is a context/handoff method, not another scheduler or specification engine. See `docs/context-methodology.md`. Context manifests report selected file hashes without pretending to prove what an LLM consumed.

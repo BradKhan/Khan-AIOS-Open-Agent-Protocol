@@ -38,3 +38,9 @@ Template self-tests are not application verification, production security certif
 This repository replaces a January-era methodology while retaining its history. It is a new design and deliberately does not inherit the old protocol as an architecture. The repository can be renamed and enabled as a template through GitHub Settings.
 
 Licensed under MIT. Third-party tools remain optional and carry their own licenses.
+
+## Interpretable Context Methodology (ICM)
+
+Context selection is a **core** part of this template, based on Jake Van Clief and David McDermott's [Interpretable Context Methodology](https://github.com/RinDig/Interpretable-Context-Methodology). Start at `AGENTS.md`, read the root `CONTEXT.md` router, load a stage contract, then only the reference files and working artifacts needed for the task. No extra agent runtime is required.
+
+`python3 scripts/context.py check` verifies routing and stage contracts. `python3 scripts/context.py plan implement --working examples/task.json` prints the precise selected files and their hashes without dumping all context into a prompt. See [docs/context-methodology.md](docs/context-methodology.md).

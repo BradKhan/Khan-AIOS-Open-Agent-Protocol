@@ -35,6 +35,7 @@ def verify_contracts():
         fixture = json.loads((ROOT/'examples'/f'{kind}.json').read_text())
         jsonschema.Draft202012Validator.check_schema(schema)
         jsonschema.validate(fixture,schema,format_checker=jsonschema.FormatChecker())
+    run([sys.executable, 'scripts/context.py', 'check'], 'ICM context routing')
     print('[verify] documentation and schemas PASS')
 
 def detected_source():
