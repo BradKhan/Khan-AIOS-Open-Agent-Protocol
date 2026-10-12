@@ -6,7 +6,7 @@
 
 **GitHub repository name:** `open-ass`
 
-**About description:** An open-source engineering system for AI agents. Spend less time managing your tools and more time shipping software.
+**About description (approved target):** Get your ASS together. An open-source development system for AI agents. Better code, sharper design, human-sounding copy, shared context, and real verification. Less setup. Less AI slop. More shipped.
 
 **Topics:** `ai-agents`, `agentic-coding`, `software-engineering`, `github-template`, `agent-skills`, `developer-tools`, `open-source`
 
