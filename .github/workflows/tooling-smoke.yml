@@ -1,0 +1,54 @@
+name: tooling-smoke
+on:
+  pull_request:
+    paths:
+      - 'scripts/**'
+      - 'tests/**'
+      - 'config/agents.json'
+      - '.mcp.json'
+      - '.codex/**'
+      - '.claude/**'
+      - '.githooks/**'
+      - '.github/workflows/tooling-smoke.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  cli-and-mcp:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Install framework dependencies
+        run: python3 -m pip install -r requirements-dev.txt
+      - name: Exercise CLI
+        run: |
+          python3 scripts/openass.py doctor
+          python3 scripts/openass.py agents list
+          python3 scripts/openass.py agents plan engineer --working examples/task.json
+          python3 scripts/openass.py skills plan --profile core --profile web
+      - name: Exercise actual MCP stdio server
+        run: |
+          python3 - <<'PY'
+          import json, subprocess, sys
+          requests = [
+            {"jsonrpc":"2.0","id":1,"method":"initialize","params":{}},
+            {"jsonrpc":"2.0","method":"notifications/initialized"},
+            {"jsonrpc":"2.0","id":2,"method":"tools/list"},
+            {"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"openass_agent_plan","arguments":{"role":"reviewer"}}}
+          ]
+          proc = subprocess.run([sys.executable,"scripts/mcp_server.py"],input="".join(json.dumps(r)+"\n" for r in requests),text=True,capture_output=True,timeout=15,check=True)
+          replies = [json.loads(line) for line in proc.stdout.splitlines()]
+          assert len(replies) == 3, replies
+          assert replies[0]["result"]["protocolVersion"] == "2025-06-18"
+          assert len(replies[1]["result"]["tools"]) == 3
+          assert not replies[2]["result"]["isError"]
+          print("MCP subprocess smoke PASS")
+          PY
+      - name: Exercise opt-in hooks configuration
+        run: |
+          python3 scripts/openass.py hooks install
+          test "$(git config --local --get core.hooksPath)" = ".githooks"
+          python3 scripts/openass.py hooks uninstall

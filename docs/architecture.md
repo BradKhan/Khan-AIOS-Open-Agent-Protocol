@@ -26,3 +26,7 @@ No database, model API, hosted coordination, prompt-evaluation service, or speci
 ## Interpretable context (ICM)
 
 The core's context architecture follows ICM's orientation → routing → stage → canonical references → working artifacts layers. The only authoritative routing registry is `context/routes.json`; `CONTEXT.md` is its human entrypoint. Each stage declares Inputs, Process, Outputs, Permissions, and References. This is a context/handoff method, not another scheduler or specification engine. See `docs/context-methodology.md`. Context manifests report selected file hashes without pretending to prove what an LLM consumed.
+
+## Executable boundaries (v0.4)
+
+The local MCP stdio server provides read-only context and skill metadata. `config/agents.json` declares portable specialist roles; `.claude/agents/` exposes project-scoped Claude Code subagents. `scripts/openass.py` unifies initialization, roles, skills, hooks and verification. `scripts/pr_gate.py` checks PR risk metadata against sensitive changed paths; `scripts/attest.py` independently inspects GitHub current-head checks and human reviews. GitHub settings remain the authoritative enforcement point for required checks, branch rules and approval.

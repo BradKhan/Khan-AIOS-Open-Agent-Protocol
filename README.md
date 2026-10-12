@@ -89,6 +89,19 @@ The core works with GitHub and Python, without requiring a paid AI service or de
 
 And your workflow stays in your repository, where it won't disappear when the next model comes along.
 
+### Operational tools
+
+Open ASS now includes a single [CLI](docs/operating-system.md), [specialist agent handoffs](config/agents.json), opt-in Git hooks and a **read-only local MCP server** for scoped context and skill metadata. See the [harness guide](docs/harnesses.md) for Claude Code, Codex and Hermes support.
+
+```bash
+python3 scripts/openass.py doctor
+python3 scripts/openass.py agents plan engineer
+python3 scripts/openass.py hooks install
+python3 scripts/openass.py verify
+```
+
+PRs are checked for declared risk and sensitive changes. After independent review, `openass.py attest` can query actual GitHub checks and current-head approvals. This cannot replace GitHub branch rulesets, application testing or authorized reviewers.
+
 ## Get your ASS up and running
 
 Copy or fork the repository into a project.

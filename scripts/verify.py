@@ -37,6 +37,8 @@ def verify_contracts():
         jsonschema.validate(fixture,schema,format_checker=jsonschema.FormatChecker())
     run([sys.executable, 'scripts/context.py', 'check'], 'ICM context routing')
     run([sys.executable, 'scripts/skills.py', 'check'], 'pinned skill catalog')
+    run([sys.executable, 'scripts/agents.py', 'check'], 'specialist role registry')
+    run([sys.executable, 'scripts/security_baseline.py'], 'framework static security')
     print('[verify] documentation and schemas PASS')
 
 def detected_source():
@@ -47,7 +49,14 @@ def detected_source():
         path=ROOT/folder
         if path.exists() and any(f.is_file() for f in path.rglob('*')):
             result.append(folder)
-    return result
+    for extension in (".py", ".js", ".jsx", ".ts", ".tsx", ".rs", ".go"):
+        for file in ROOT.glob("*" + extension):
+            if file.is_file():
+                result.append(file.name)
+    for name in ("index.html", "Dockerfile", "Makefile", "requirements.txt"):
+        if (ROOT / name).is_file():
+            result.append(name)
+    return sorted(set(result))
 
 def verify_application(config):
     if not isinstance(config.get('initialized'),bool):
@@ -67,6 +76,9 @@ def verify_application(config):
     project=(ROOT/'PROJECT.md').read_text()
     if any(x in project for x in ('[Project name]','[Whose problem?]','[Concrete problem]','[User-observable result]')):
         fail('Fill in PROJECT.md before application verification')
+    architecture=(ROOT/'ARCHITECTURE.md').read_text()
+    if any(x in architecture for x in ('[External systems and responsibilities]', '[What runs where and why]', '[APIs, schemas, events, integrations]')):
+        fail('Fill in ARCHITECTURE.md before application verification')
     command=v.get('application_command')
     if not command: fail('Application verification command missing')
     run(command,'application')

@@ -1,0 +1,4 @@
+# Optional Codex repo-scoped MCP config. Start Codex from the repo root.
+[mcp_servers.openass]
+command = "python3"
+args = ["scripts/mcp_server.py"]
