@@ -14,7 +14,7 @@ Once a distinct authorized collaborator is available to approve work, the owner 
 python3 scripts/openass.py github-admin --repo BradKhan/open-ASS --apply --confirm BradKhan/open-ASS --reviewer-ready
 ```
 
-**Do not paste GitHub tokens into chat or commit them.** `GITHUB_TOKEN`, `GH_TOKEN`, or an authenticated `gh` CLI supplies credentials locally. This command can block future merges if the required collaborator is absent, so `--reviewer-ready` is mandatory. `--require-codeowners` is optional and should only be enabled after `.github/CODEOWNERS` includes a distinct eligible reviewing collaborator. It does not auto-invite collaborators or assign reviewers.
+**Do not paste GitHub tokens into chat or commit them.** `GITHUB_TOKEN`, `GH_TOKEN`, or an authenticated `gh` CLI supplies credentials locally. This command can block future merges if the required collaborator is absent, so `--reviewer-ready` is mandatory. It also checks for a distinct write-access collaborator before making any settings changes. `--require-codeowners` is optional and should only be enabled after `.github/CODEOWNERS` includes a distinct eligible reviewing collaborator. It does not auto-invite collaborators or assign reviewers.
 
 CI checks to require are: `template-contracts`, `pr-risk`, `sdk-compatibility (3.11)`, `sdk-compatibility (3.13)`, `actions-security`, `browser-fixtures`, and `harness-cli`. The browser workflow now runs on every PR so a required status never disappears on docs-only changes.
 
