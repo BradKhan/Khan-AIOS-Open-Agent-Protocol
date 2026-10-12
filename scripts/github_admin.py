@@ -82,7 +82,7 @@ def token_from_environment():
     raise AdminError("an admin-capable GitHub token or authenticated gh CLI is required; don't paste tokens in chat")
 
 def github_api(method,path,body=None,token=None):
-    if not re.fullmatch(r"/repos/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+(?:/topics|/rulesets(?:/[0-9]+)?)?",path):
+    if not re.fullmatch(r"/repos/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+(?:/topics|/rulesets(?:/[0-9]+)?|/collaborators\?per_page=100)?",path):
         raise AdminError("unapproved GitHub API endpoint")
     if method not in ("GET","PATCH","POST","PUT"):raise AdminError("unapproved GitHub API method")
     if method!="GET" and not token:raise AdminError("GitHub administration token required")
@@ -109,6 +109,15 @@ def apply(repo,preview,token,request=github_api):
     root="/repos/"+repo
     changes=preview["changes"]
     outcomes=[]
+    reviewers=request("GET",root+"/collaborators?per_page=100",token=token)
+    if not isinstance(reviewers,list) or len(reviewers)>=100:
+        raise AdminError("cannot exhaustively confirm independent reviewers")
+    original_owner=repo.split("/",1)[0].lower()
+    eligible=[person for person in reviewers if isinstance(person,dict)
+              and str(person.get("login","")).lower()!=original_owner
+              and (person.get("permissions") or {}).get("push") is True]
+    if not eligible:
+        raise AdminError("no distinct write-access reviewer: invite a collaborator first")
     if changes["enable_template"]:
         request("PATCH",root,{"is_template":True},token=token)
         outcomes.append("template enabled")
