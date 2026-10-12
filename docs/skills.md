@@ -55,3 +55,7 @@ Catalog details (including upstream links and exact commits) are in [integration
 ## Adding a skill
 
 Document the source, exact upstream commit SHA, install path, license, task scope, and why it improves on the existing profile. Audit the instruction bundle for credential requests, policy overrides, hidden fetches, or executable steps. Then add a representative test/evaluation and submit a focused PR. Avoid importing alternative planning frameworks that replicate the same phase.
+
+## Runtime use
+
+A skill being pinned and installed does not mean a coding agent used it. Run `python3 scripts/agents.py plan designer` or inspect `openass_agent_plan` via MCP to see the role's intended skill selection and which instruction entrypoints are actually installed. The current router does not automatically execute any tool or agent. See [operating system](operating-system.md) and [harness integration](harnesses.md).

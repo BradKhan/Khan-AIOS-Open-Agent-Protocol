@@ -9,3 +9,5 @@ __pycache__/
 node_modules/
 dist/
 coverage/
+.open-ass-stage-*/
+*.log

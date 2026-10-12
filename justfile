@@ -15,3 +15,18 @@ contract-task:
 
 contract-evidence:
     python3 scripts/validate_artifact.py evidence examples/evidence.json
+
+doctor-all:
+    python3 scripts/openass.py doctor
+
+roles:
+    python3 scripts/agents.py list
+
+mcp-check:
+    python3 -m unittest tests.test_operational.MCPTests -v
+
+security-baseline:
+    python3 scripts/security_baseline.py
+
+hooks-status:
+    python3 scripts/openass.py hooks status
