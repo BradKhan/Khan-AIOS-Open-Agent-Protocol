@@ -12,6 +12,7 @@ import sys
 import tempfile
 import urllib.parse
 import urllib.request
+from urllib.error import HTTPError, URLError
 from pathlib import Path, PurePosixPath
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -97,10 +98,14 @@ def fetch_bytes(url, limit):
     if parsed.scheme != "https" or parsed.hostname not in ("api.github.com", "raw.githubusercontent.com"):
         raise SkillError("unapproved download host")
     req = urllib.request.Request(url, headers={"User-Agent": "open-ass-pinned-skills/1", "Accept": "application/vnd.github+json"})
-    with urllib.request.urlopen(req, timeout=25) as res:
-        final = urllib.parse.urlparse(res.geturl())
-        if final.scheme != "https" or final.hostname not in ("api.github.com", "raw.githubusercontent.com"):
-            raise SkillError("unsafe download redirect")
+    class StrictRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, request, fp, code, msg, headers, newurl):
+            destination = urllib.parse.urlparse(newurl)
+            if destination.scheme != "https" or destination.hostname not in ("api.github.com", "raw.githubusercontent.com"):
+                raise SkillError("unsafe download redirect")
+            return super().redirect_request(request, fp, code, msg, headers, newurl)
+    opener = urllib.request.build_opener(StrictRedirect)
+    with opener.open(req, timeout=25) as res:
         data = res.read(limit + 1)
     if len(data) > limit:
         raise SkillError("download exceeds size limit")
@@ -168,6 +173,8 @@ def inspect_skill(content, skill_id):
 
 
 def audit(root=ROOT):
+    manifest = load(root)
+    current = {rec["id"]: rec for rec in manifest["skills"]}
     base = root / ".agents" / "skills"
     results = []
     if not base.exists():
@@ -181,9 +188,20 @@ def audit(root=ROOT):
         record = json.loads(stamp.read_text(encoding="utf-8"))
         if record.get("id") != folder.name or not SHA.fullmatch(str(record.get("revision", ""))):
             raise SkillError("invalid installed skill provenance: " + folder.name)
+        matching = current.get(folder.name)
+        if matching is None or any(record.get(field) != matching[field] for field in ("source", "revision", "directory")):
+            raise SkillError("installed skill does not match pinned catalog: " + folder.name)
         files = record.get("files")
         if not isinstance(files, dict) or "SKILL.md" not in files:
             raise SkillError("invalid installed skill file registry: " + folder.name)
+        actual = set()
+        for actual_file in folder.rglob("*"):
+            if actual_file.is_symlink():
+                raise SkillError("symlink inside installed skill: " + str(actual_file))
+            if actual_file.is_file():
+                actual.add(actual_file.relative_to(folder).as_posix())
+        if actual != set(files) | {".open-ass-source.json"}:
+            raise SkillError("untracked or missing file inside managed skill: " + folder.name)
         for path, digest in files.items():
             check_path(path)
             target = (folder / path).resolve()
@@ -258,7 +276,7 @@ def main():
         elif args.cmd == "install":
             names = install(selected(catalog, args.profile, args.skill))
             print("Installed instruction-only skills: " + ", ".join(names))
-    except (SkillError, OSError, KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+    except (SkillError, OSError, KeyError, TypeError, ValueError, json.JSONDecodeError, HTTPError, URLError) as exc:
         print("skills: " + str(exc), file=sys.stderr)
         sys.exit(1)
 
