@@ -11,3 +11,6 @@ dist/
 coverage/
 .open-ass-stage-*/
 *.log
+
+# Untracked local task state and context traces
+.openass/
