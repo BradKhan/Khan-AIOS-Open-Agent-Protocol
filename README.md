@@ -104,25 +104,37 @@ PRs are checked for declared risk and sensitive changes. After independent revie
 
 ## Get your ASS up and running
 
-Copy or fork the repository into a project.
+Copy Open ASS into a repository you control. Python 3.11+ and Git are sufficient for the core.
 
-Install the development requirements and verify the foundation:
+```bash
+python3 -m pip install -r requirements-dev.txt
+python3 scripts/openass.py doctor
+python3 scripts/openass.py verify
+```
 
-`python3 -m pip install -r requirements-dev.txt`
+The initial run verifies the framework, **not your application**. Initialize a copied project with its actual test command and GitHub owner:
 
-`python3 scripts/verify.py`
+```bash
+python3 scripts/openass.py bootstrap --name my-app --owner YOUR_GITHUB_LOGIN --app-check npm test
+python3 scripts/openass.py bootstrap --name my-app --owner YOUR_GITHUB_LOGIN --apply --app-check npm test
+```
 
-See which skills are available:
+The first command is a dry run. The second configures the project and replaces upstream CODEOWNERS; it never runs your supplied test command. Complete PROJECT.md and ARCHITECTURE.md and verify the app.
 
-`python3 scripts/skills.py list`
+Add curated capabilities as needed:
 
-Install the core engineering and web/design profiles:
+```bash
+python3 scripts/openass.py skills list
+python3 scripts/openass.py skills install --profile core --profile web
+python3 scripts/openass.py role-sync check
+python3 scripts/openass.py harness --harness hermes --role engineer
+python3 scripts/openass.py quality plan
+python3 scripts/openass.py evaluate
+```
 
-`python3 scripts/skills.py install --profile core --profile web`
+Harness commands are **dry-run-first**, and third-party tools may need their own installation. A local task lifecycle, read-only MCP server, browser evidence gate and GitHub attestation tool are included. Neither code generation nor a green template test substitutes for verified application behavior or authorized review.
 
-Configure your project's actual application tests before relying on the framework to verify its behavior.
-
-[Quickstart](docs/quickstart.md) · [Skills and profiles](docs/skills.md) · [Architecture](docs/architecture.md)
+[Quickstart](docs/quickstart.md) · [Skills](docs/skills.md) · [Agent harnesses](docs/harness-runtime.md) · [Task lifecycle](docs/lifecycle.md) · [Product quality](docs/product-quality.md) · [Release evaluations](docs/release-evaluation.md)
 
 ## Built in the open
 
