@@ -1,0 +1,51 @@
+{
+  "version": "0.1",
+  "stages": {
+    "research": {
+      "context": "context/stages/research/CONTEXT.md",
+      "references": [
+        "PROJECT.md",
+        "POLICY.md",
+        "sops/research.md",
+        "docs/selection.md"
+      ]
+    },
+    "specify": {
+      "context": "context/stages/specify/CONTEXT.md",
+      "references": [
+        "PROJECT.md",
+        "ARCHITECTURE.md",
+        "POLICY.md",
+        "docs/specification.md",
+        "sops/standard.md"
+      ]
+    },
+    "implement": {
+      "context": "context/stages/implement/CONTEXT.md",
+      "references": [
+        "PROJECT.md",
+        "ARCHITECTURE.md",
+        "POLICY.md",
+        "sops/standard.md",
+        "docs/skill-policy.md"
+      ]
+    },
+    "verify": {
+      "context": "context/stages/verify/CONTEXT.md",
+      "references": [
+        "POLICY.md",
+        "docs/integration-contract.md",
+        "contracts/evidence.schema.json",
+        "sops/standard.md"
+      ]
+    },
+    "release": {
+      "context": "context/stages/release/CONTEXT.md",
+      "references": [
+        "POLICY.md",
+        "sops/release.md",
+        "docs/integration-contract.md"
+      ]
+    }
+  }
+}

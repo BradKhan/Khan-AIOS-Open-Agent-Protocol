@@ -12,3 +12,7 @@ State progression: ready -> claimed -> running -> pr_open -> awaiting_checks -> 
 6. Retry only retryable failures under spending and attempt ceilings. Recover orphaned tasks after leases expire.
 
 Webhook deliveries can repeat: authenticate with GitHub HMAC, deduplicate delivery IDs, and make all transitions idempotent. Enforce credentials and authorization at the executor, not only in task JSON.
+
+## Context handoff
+
+An orchestrator may run `python3 scripts/context.py plan <stage> --working <path>` to record paths and SHA-256 hashes of scoped context sources. The selected stage, accepted issue/spec, and artifact references travel with the task lease. These file hashes are a record of selected repository context, not a substitute for runtime permission checks or evidence that a model read each file. Do not feed all memory or every repository file to agents by default.
