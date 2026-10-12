@@ -13,11 +13,15 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 RANK = {"fast": 0, "standard": 1, "critical": 2}
-SENSITIVE = (".github/workflows/", "config/", ".mcp.json", ".codex/",
-             "POLICY.md", "SECURITY.md", "scripts/pr_gate.py",
+SENSITIVE = (".github/workflows/", ".github/CODEOWNERS", "config/", ".mcp.json",
+             ".codex/", ".claude/agents/", ".githooks/",
+             "AGENTS.md", "POLICY.md", "SECURITY.md",
+             "integrations/skills.lock.json", "integrations/hermes-hooks.example.yaml",
+             "scripts/pr_gate.py", "scripts/attest.py", "scripts/hermes_hook.py",
              "scripts/security_baseline.py", "scripts/verify.py",
-             "scripts/skills.py", "scripts/mcp_server.py", "scripts/hook_gate.py")
-CODE = ("scripts/", "tests/", ".agents/", "contracts/", "context/")
+             "scripts/skills.py", "scripts/mcp_server.py", "scripts/hook_gate.py",
+             "scripts/agents.py", "scripts/context.py")
+CODE = ("scripts/", "tests/", ".agents/", "contracts/", "context/", "integrations/")
 RISK = re.compile(r"(?im)^\s*Risk(?: class)?\s*:\s*(fast|standard|critical)\s*$")
 ISSUE = re.compile(r"(?im)^\s*Issue\s*:\s*(?:[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)?#([1-9][0-9]*)\s*$")
 
@@ -74,14 +78,13 @@ def git_changes(base, head):
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--event", required=True, help="GitHub pull_request event JSON")
-    p.add_argument("--changed", action="append", default=[], help="Test override; do not use in protected CI")
     a = p.parse_args()
     try:
         event = json.loads(Path(a.event).read_text())
         pull = event.get("pull_request")
         if not isinstance(pull, dict):
             raise GateError("not a pull_request event")
-        changed = a.changed or git_changes(pull["base"]["sha"], pull["head"]["sha"])
+        changed = git_changes(pull["base"]["sha"], pull["head"]["sha"])
         config = json.loads((ROOT / "config/project.json").read_text())
         settings = config.get("verification", {})
         result = check(pull.get("body"), changed,
