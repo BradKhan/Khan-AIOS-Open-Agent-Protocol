@@ -20,8 +20,14 @@ class HarnessTests(unittest.TestCase):
         self.assertIn("workspace-write",harness.command("codex","write-branch"))
     def test_hermes_noninteractive_and_safe_mode(self):
         self.assertIn("--query-file",harness.command("hermes","read"))
-        self.assertIn("--safe-mode",harness.command("hermes","read"))
+        self.assertNotIn("--safe-mode",harness.command("hermes","read"))
+        self.assertIn("--toolsets",harness.command("hermes","read"))
+        self.assertEqual(harness.command("hermes","read")[:4],
+                         ["hermes","chat","--oneshot","--query-file"])
+        self.assertIn("--format",harness.command("hermes","read"))
         self.assertIn("--worktree",harness.command("hermes","write-branch"))
+        self.assertIn("--checkpoints",harness.command("hermes","write-branch"))
+        self.assertNotIn("--yolo",harness.command("hermes","write-branch"))
     def test_claude_plan_mode_for_reviewers(self):
         self.assertIn("plan",harness.command("claude","read"))
     def test_handoff_provenance(self):

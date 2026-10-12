@@ -2,7 +2,7 @@
 
 Use python3 scripts/openass.py harness --harness codex|claude|hermes --role ROLE to inspect a safe dry-run command and whether the CLI is installed. Add --execute only after reviewing the command, scope, available credentials and agent sandbox. Executing a real agent may incur cost and modify files for writable roles.
 
-Codex uses codex exec with explicit read-only or workspace-write sandbox; Claude Code uses claude -p with plan-mode for read-only specialists; Hermes uses one-shot chat, query from stdin, and safe-mode or worktree as applicable. Actual CLI options vary across versions; check the local --help when upgrading. No shell interpolation or automatic merge.
+Codex uses codex exec with explicit read-only or workspace-write sandbox; Claude Code uses claude -p with plan-mode for read-only specialists; Hermes uses one-shot chat, query from stdin, structured stream-json events, bounded turns, and worktree/checkpoints for editing roles. Read roles request the restricted `skills` toolset. **Do not use `--safe-mode` for ordinary Open ASS execution**: it disables project instructions, hooks, MCPs and skills. Noninteractive Hermes modes can bypass interactive approvals; constrain terminal permissions in the host sandbox and grant execution consent explicitly. Actual CLI options vary across versions; check the local --help when upgrading. No shell interpolation or automatic merge.
 
 Handoffs carry scoped context text and hash provenance, using the role registry. Scripted runs are bounded by an explicit timeout, and results report the actual process exit code. The runtime's own token/tool budgets, approvals, filesystem isolation and network access are still enforced by the runtime, not this adapter.
 
