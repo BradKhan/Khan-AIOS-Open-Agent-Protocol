@@ -29,6 +29,23 @@ class EvaluationSuiteTests(unittest.TestCase):
             for p in root.rglob("*"):
                 if p.is_file():self.assertNotIn('"expected"',p.read_text())
             self.assertTrue((root/"AGENTS.md").is_file())
+    def test_live_runner_does_not_add_smoke_proof_or_accept_modified_task(self):
+        from unittest.mock import patch
+        task=ev.load()[0]
+        observed=[]
+        def invoke(argv,prompt,root,timeout):
+            observed.append(sorted(p.name for p in root.iterdir() if p.name!=".git"))
+            (root/"solution.py").write_text(
+                "def solve(value):\n    return ' '.join(reversed(value.split()))\n")
+            (root/"TASK.md").write_text("tampered")
+            return {"exit_code":0}
+        with patch.object(ev,"verify",return_value={"passed":True}):
+            r=ev.run_one(task,"baseline","codex","image",invoke=invoke)
+        self.assertNotIn("AGENTS.md",observed[0])
+        self.assertNotIn("acceptance.txt",observed[0])
+        self.assertFalse(r["accepted"])
+        self.assertFalse(r["instruction_files_unchanged"])
+
     def test_compare_matching_records(self):
         base={"suite":"openass-coding-v1","mode":"baseline","harness":"codex",
               "model_version":"test","task_ids":["one"],
