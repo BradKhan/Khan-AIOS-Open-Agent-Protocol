@@ -236,7 +236,7 @@ def run(db,task_id,runtime,role,actor,root=ROOT,timeout=900,reserve_cents=0,
             if writer is not None:
                 writer.join(timeout=1)
         result.update(exit_code=code,stdout_sha256=digest(outpath),stderr_sha256=digest(errpath))
-        if fed is not None and (not fed["done"] or fed["error"]):
+        if status=="failed" and fed is not None and (not fed["done"] or fed["error"]):
             status="stdin-failure"
         if outpath.stat().st_size>MAX_OUTPUT_BYTES or errpath.stat().st_size>MAX_OUTPUT_BYTES:
             status="output-limit"
