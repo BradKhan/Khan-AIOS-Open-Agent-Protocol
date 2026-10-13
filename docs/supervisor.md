@@ -24,3 +24,7 @@ The fixtures in `tests/test_supervisor.py` run actual child processes, including
 ### v0.5 crash and stdin guarantees
 
 The state transition to `running`, budget reservation, durable event and attempt lease are now a **single SQLite IMMEDIATE transaction**; the task cannot be left running without a recoverable attempt if insertion fails. The agent prompt is fed by a monitored background writer so an unresponsive child cannot block timeout/cancellation. Crash recovery still requires a stale lease and no live local PID, and assumes the same host/process namespace; cross-host orphan recovery remains a separate orchestrator concern.
+
+### OCI execution boundary (v0.5)
+
+Choose `--backend container --container-image REGISTRY/IMAGE@sha256:DIGEST` on `openass run run`. The Docker command is built as an argv array, refuses tag-only images, uses `--pull=never`, drops all capabilities, disables networking, runs as the invoking nonroot uid/gid, and exposes only the selected workspace as a writable mount. No Docker socket, home directory, SSH agent, credentials or network is mounted. The image must be **pre-pulled** and must contain the specific agent CLI; this offline security profile cannot access hosted inference APIs. Online execution requires an independently secured egress/broker policy—do not flip to unrestricted bridge networking. Docker is not a VM security boundary and access to the Docker daemon is privileged. The older `--backend local` remains available for authorized environments; it has no host filesystem isolation.

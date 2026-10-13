@@ -67,6 +67,14 @@ class SupervisorTests(unittest.TestCase):
         self.assertEqual(result["status"],"timeout")
         self.assertEqual(lifecycle.show(self.db,self.task)["state"],"failed")
 
+    def test_container_requires_pinned_image_before_start(self):
+        from scripts import sandbox
+        self.enter(self.runtime(SIMPLE))
+        with self.assertRaises(sandbox.SandboxError):
+            supervisor.run(self.db,self.task,"codex","engineer","worker",root=ROOT,
+                           reserve_cents=30,backend="container",container_image="ubuntu:latest")
+        self.assertEqual(lifecycle.show(self.db,self.task)["state"],"ready")
+
     def test_dry_run_does_not_charge_or_mutate(self):
         self.enter(self.runtime(SIMPLE))
         r=supervisor.run(self.db,self.task,"codex","engineer","worker",

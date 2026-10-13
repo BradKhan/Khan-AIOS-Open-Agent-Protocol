@@ -19,7 +19,7 @@ from decimal import Decimal, InvalidOperation, ROUND_UP
 from pathlib import Path
 
 try:
-    from scripts import agents, harness, lifecycle
+    from scripts import agents, harness, lifecycle, sandbox, sandbox
 except ModuleNotFoundError:
     import agents, harness, lifecycle
 
@@ -168,7 +168,8 @@ def terminate(process):
 
 def run(db,task_id,runtime,role,actor,root=ROOT,timeout=900,reserve_cents=0,
         execute=False,ack_unmetered=False,include_skills=(),
-        popen=subprocess.Popen,sleep=time.sleep,clock=time.monotonic):
+        popen=subprocess.Popen,sleep=time.sleep,clock=time.monotonic,
+        backend="local",container_image=None):
     init(db)
     snapshot=lifecycle.show(db,task_id)
     if snapshot["state"]!="ready":raise SupervisorError("task must be ready")
@@ -177,6 +178,10 @@ def run(db,task_id,runtime,role,actor,root=ROOT,timeout=900,reserve_cents=0,
     role_plan=agents.plan(role,root=root)
     if role_plan["mode"]!="write-branch":raise SupervisorError("role must be branch-write")
     cmd=harness.command(runtime,"write-branch",budget_cents=reserve_cents)
+    if backend not in ("local","container"):
+        raise SupervisorError("unsupported execution backend")
+    if backend=="container":
+        cmd=sandbox.wrap(cmd,root,container_image)
     if type(timeout)!=int or not 1<=timeout<=3600:raise SupervisorError("invalid timeout")
     if type(reserve_cents)!=int or reserve_cents<=0:
         raise SupervisorError("reserve-cents must be positive")
@@ -296,6 +301,8 @@ def main():
     a.add_argument("--include-skill",action="append",default=[])
     a.add_argument("--execute",action="store_true")
     a.add_argument("--ack-unmetered",action="store_true")
+    a.add_argument("--backend",choices=("local","container"),default="local")
+    a.add_argument("--container-image")
     r=sub.add_parser("recover")
     r.add_argument("task");r.add_argument("--actor",required=True)
     r.add_argument("--stale-seconds",type=int,default=120)
@@ -306,11 +313,12 @@ def main():
                 result=run(db,args.task,args.harness,args.role,args.actor,
                            timeout=args.timeout,reserve_cents=args.reserve_cents,
                            execute=args.execute,ack_unmetered=args.ack_unmetered,
-                           include_skills=args.include_skill)
+                           include_skills=args.include_skill,
+                           backend=args.backend,container_image=args.container_image)
             else:result=recover(db,args.task,args.actor,args.stale_seconds)
         print(json.dumps(result,indent=2))
     except (SupervisorError,lifecycle.LifecycleError,agents.AgentError,
-            harness.HarnessError,sqlite3.Error,ValueError,OSError) as exc:
+            harness.HarnessError,sandbox.SandboxError,sqlite3.Error,ValueError,OSError) as exc:
         print("supervisor: "+str(exc),file=sys.stderr)
         raise SystemExit(1)
 
