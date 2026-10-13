@@ -35,9 +35,12 @@ def api_get(path, token=None):
     return json.loads(raw)
 
 
-DEFAULT_REQUIRED = ("template-contracts", "pr-risk", "sdk-compatibility (3.11)",
-                    "sdk-compatibility (3.13)", "actions-security", "browser-fixtures",
-                    "harness-cli")
+try:
+    from scripts import release_policy
+except ModuleNotFoundError:
+    import release_policy
+
+DEFAULT_REQUIRED = release_policy.read()["checks"]
 
 
 def evaluate(pull, checks, reviews, required, human_review=True, trusted_app=None):

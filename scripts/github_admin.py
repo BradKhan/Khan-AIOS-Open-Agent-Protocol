@@ -16,10 +16,15 @@ import urllib.request
 
 TOPICS = ("ai-agents","agentic-coding","software-engineering","github-template",
           "agent-skills","developer-tools","open-source")
-CHECKS = ("template-contracts","pr-risk","sdk-compatibility (3.11)",
-          "sdk-compatibility (3.13)","actions-security","browser-fixtures","harness-cli")
+try:
+    from scripts import release_policy
+except ModuleNotFoundError:
+    import release_policy
+
+_RELEASE_POLICY = release_policy.read()
+CHECKS = _RELEASE_POLICY["checks"]
 RULESET_NAME = "Open ASS: protected main and independent review"
-GH_ACTIONS_APP_ID = 15368
+GH_ACTIONS_APP_ID = _RELEASE_POLICY["app_id"]
 
 class AdminError(ValueError): pass
 

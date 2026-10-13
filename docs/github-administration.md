@@ -31,3 +31,7 @@ Social preview artwork still needs to be uploaded manually in GitHub Settings, b
 Claude Code's `--max-turns` is documented but intentionally absent from the CLI `--help` output (Anthropic issue #16963). The executable contract check therefore validates visible flags and separately tests that the adapter retains the documented hidden turn limiter. No prompt is sent to authenticate this behavior in CI.
 
 Attestation defaults now require the same seven checks as the owner ruleset, including `browser-fixtures` and `harness-cli`. Review evidence must come from a distinct human account on the current head (not a bot, case-variant of the PR author, or an earlier approval superseded by requested changes).
+
+## One checked release contract
+
+`config/release-gates.json` is the only source for required check names, job mappings and GitHub Actions integration ID. `scripts/release_policy.py` validates that every required job exists and cannot be silently path-filtered from PRs. `scripts/attest.py` and `scripts/github_admin.py` import this same contract rather than maintaining competing lists. Run `python3 scripts/release_policy.py` to inspect the active gate configuration. A new required check must be added to the contract and its actual workflow together; CI fails on drift.
