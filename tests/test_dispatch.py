@@ -36,8 +36,46 @@ class DispatchTests(unittest.TestCase):
         lifecycle.transition(db,id,"fail",actor,next_["rev"])
         return {"status":"failed","exit_code":9}
     def verify(self,root):
-        self.assertEqual(root,ROOT)
+        self.assertTrue(root.is_dir())
         return {"exit_code":0,"output_sha256":"f"*64}
+
+    def verified_head(self,root,head,verifier):
+        return {"exit_code":0,"output_sha256":"f"*64,"head_sha":head}
+    def test_detached_revision_verifier_rejects_dirty_test_results(self):
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td)
+            commands=[
+                ["git","init","-q","-b","feature"],
+                ["git","-c","user.name=fixture","-c","user.email=fixture@example.invalid",
+                 "commit","--allow-empty","-qm","start"]
+            ]
+            for cmd in commands:
+                p=subprocess.run(cmd,cwd=root,check=False,capture_output=True)
+                self.assertEqual(p.returncode,0,p.stderr)
+            head=subprocess.check_output(["git","rev-parse","HEAD"],cwd=root,text=True).strip()
+            def clean(root):
+                self.assertNotEqual(root,Path(td))
+                return {"exit_code":0,"output_sha256":"f"*64}
+            r=dispatch.verify_revision(root,head,verifier=clean)
+            self.assertEqual(r["head_sha"],head)
+            def dirty(root):
+                (root/"tampered.py").write_text("changed")
+                return {"exit_code":0}
+            with self.assertRaisesRegex(dispatch.DispatchError,"verification changed"):
+                dispatch.verify_revision(root,head,verifier=dirty)
+
+    def test_revision_handoff_rejects_unbound_evidence(self):
+        self.success(self.db,self.task,"codex","engineer","worker",reserve_cents=20,
+                     execute=True,ack_unmetered=True)
+        with patch.object(dispatch,"local_head",return_value=SHA):
+            with self.assertRaisesRegex(dispatch.DispatchError,"does not match"):
+                dispatch.dispatch(self.db,self.task,"codex","worker",repo="BradKhan/open-ASS",pr=25,
+                    execute=True,ack_unmetered=True,
+                    verifier=self.verify,
+                    commit_verifier=lambda root,head,verifier:{"exit_code":0,"head_sha":"b"*40},
+                    fetch_pr=lambda repo,number,sha:{"head_sha":sha})
+        self.assertEqual(lifecycle.show(self.db,self.task)["state"],"verifying")
+
     def test_dry_run_does_not_mutate_or_spawn(self):
         r=dispatch.dispatch(self.db,self.task,"codex","worker",reserve_cents=100)
         self.assertEqual(r["status"],"dry-run")
@@ -61,7 +99,7 @@ class DispatchTests(unittest.TestCase):
         with patch.object(dispatch,"local_head",return_value=SHA):
             r=dispatch.dispatch(self.db,self.task,"codex","worker",repo="BradKhan/open-ASS",
                                 pr=25,execute=True,ack_unmetered=True,
-                                verifier=self.verify,
+                                verifier=self.verify,commit_verifier=self.verified_head,
                                 fetch_pr=lambda repo,number,sha:
                                     {"number":number,"head_sha":sha,"url":"https://github.com/BradKhan/open-ASS/pull/25"})
         self.assertEqual(r["status"],"awaiting-independent-review")

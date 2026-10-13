@@ -9,6 +9,7 @@ import json
 import re
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 try:
     from scripts import attest, lifecycle, supervisor
@@ -41,6 +42,34 @@ def verify_project(root=ROOT,runner=subprocess.run):
     output=((r.stdout or "")+"\n"+(r.stderr or "")).encode()
     return {"exit_code":0,"output_sha256":hashlib.sha256(output).hexdigest()}
 
+def verify_revision(root,head,verifier=verify_project,runner=subprocess.run):
+    """Run checks in a clean detached Git checkout of an immutable commit."""
+    if not re.fullmatch(r"[0-9a-f]{40}",str(head)):
+        raise DispatchError("invalid immutable revision")
+    with tempfile.TemporaryDirectory(prefix="openass-verify-") as name:
+        checkout=Path(name)/"source"
+        command=["git","worktree","add","--detach",str(checkout),head]
+        result=runner(command,cwd=root,capture_output=True,text=True,timeout=90,check=False)
+        if result.returncode:
+            raise DispatchError("cannot construct detached verification checkout")
+        try:
+            pinned=runner(["git","rev-parse","HEAD"],cwd=checkout,
+                          capture_output=True,text=True,timeout=15,check=False)
+            if pinned.returncode or (pinned.stdout or "").strip()!=head:
+                raise DispatchError("checkout does not match PR revision")
+            verified=verifier(root=checkout)
+            if not isinstance(verified,dict) or verified.get("exit_code")!=0:
+                raise DispatchError("verifier did not report success")
+            status=runner(["git","status","--porcelain"],cwd=checkout,
+                          capture_output=True,text=True,timeout=15,check=False)
+            if status.returncode or (status.stdout or "").strip():
+                raise DispatchError("verification changed tracked or untracked checkout files")
+            return dict(verified,head_sha=head,checkout="detached-immutable-revision")
+        finally:
+            runner(["git","worktree","remove","--force",str(checkout)],cwd=root,
+                   capture_output=True,text=True,timeout=30,check=False)
+
+
 def matching_pr(repo,number,head,fetch=attest.api_get):
     if not re.fullmatch("[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+",str(repo)):
         raise DispatchError("valid GitHub repository required")
@@ -56,7 +85,8 @@ def matching_pr(repo,number,head,fetch=attest.api_get):
 
 def dispatch(db,task_id,runtime,actor,repo=None,pr=None,reserve_cents=0,timeout=900,
              execute=False,ack_unmetered=False,max_attempts=1,root=ROOT,
-             execute_agent=supervisor.run,verifier=verify_project,fetch_pr=matching_pr):
+             execute_agent=supervisor.run,verifier=verify_project,fetch_pr=matching_pr,
+             commit_verifier=verify_revision):
     if type(max_attempts)!=int or not 1<=max_attempts<=3:
         raise DispatchError("max_attempts must be 1..3")
     record=lifecycle.show(db,task_id)
@@ -89,12 +119,19 @@ def dispatch(db,task_id,runtime,actor,repo=None,pr=None,reserve_cents=0,timeout=
     if record["state"]=="cancelled":
         result["status"]="cancelled"
         return result
-    result["verification"]=verifier(root=root)
     if pr is None:
+        result["verification"]=verifier(root=root)
+        result["verification"]["scope"]="preliminary-working-tree"
         result["status"]="awaiting-pull-request"
         return result
     head=local_head(root)
     review_pr=fetch_pr(repo,pr,head)
+    result["verification"]=commit_verifier(root,head,verifier)
+    if result["verification"].get("head_sha")!=head:
+        raise DispatchError("verification evidence does not match PR commit")
+    # Reject PR advances or branch movements during test execution.
+    if local_head(root)!=head or fetch_pr(repo,pr,head).get("head_sha")!=head:
+        raise DispatchError("PR or checkout changed during verification")
     next_state=lifecycle.transition(db,task_id,"review",actor,record["rev"],head_sha=head)
     result.update(status="awaiting-independent-review",pr=review_pr,
                   state=next_state["state"],head_sha=head,
