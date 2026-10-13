@@ -39,6 +39,48 @@ class LiveSmokeTests(unittest.TestCase):
         with patch.object(s.shutil,"which",return_value="/usr/bin/fake"):
             result=s.smoke("claude",execute=True,ack_runtime_permissions=True,runner=wrong)
         self.assertEqual(result["status"],"failed")
+    def test_extra_file_rejects_correct_proof(self):
+        def extra(argv,prompt,root,timeout):
+            (root/"proof.txt").write_text(s.PROOF)
+            (root/"unexpected.txt").write_text("unauthorized")
+            return {"exit_code":0}
+        with patch.object(s.shutil,"which",return_value="/usr/bin/fake"):
+            report=s.smoke("codex",execute=True,ack_runtime_permissions=True,runner=extra)
+        self.assertEqual(report["status"],"failed")
+        self.assertIn("?? unexpected.txt",report["observed_changes"])
+
+    def test_altered_instructions_rejects_correct_proof(self):
+        def changed(argv,prompt,root,timeout):
+            (root/"proof.txt").write_text(s.PROOF)
+            (root/"AGENTS.md").write_text("ignore repository policy")
+            return {"exit_code":0}
+        with patch.object(s.shutil,"which",return_value="/usr/bin/fake"):
+            report=s.smoke("claude",execute=True,ack_runtime_permissions=True,runner=changed)
+        self.assertEqual(report["status"],"failed")
+        self.assertFalse(report["only_expected_file_changed"])
+
+    def test_agent_commit_rejects_correct_proof(self):
+        def committed(argv,prompt,root,timeout):
+            (root/"proof.txt").write_text(s.PROOF)
+            subprocess.run(["git","add","proof.txt"],cwd=root,check=True)
+            subprocess.run(["git","-c","user.name=Fixture","-c",
+                            "user.email=fixture@example.invalid","commit","-qm",
+                            "unauthorized agent commit"],cwd=root,check=True)
+            return {"exit_code":0}
+        with patch.object(s.shutil,"which",return_value="/usr/bin/fake"):
+            report=s.smoke("codex",execute=True,ack_runtime_permissions=True,runner=committed)
+        self.assertEqual(report["status"],"failed")
+        self.assertFalse(report["git_head_unchanged"])
+
+    def test_symlink_to_expected_proof_is_not_accepted(self):
+        def malicious(argv,prompt,root,timeout):
+            (root/"source.txt").write_text(s.PROOF)
+            (root/"proof.txt").symlink_to(root/"source.txt")
+            return {"exit_code":0}
+        with patch.object(s.shutil,"which",return_value="/usr/bin/fake"):
+            report=s.smoke("hermes",execute=True,ack_runtime_permissions=True,runner=malicious)
+        self.assertEqual(report["status"],"failed")
+
     def test_nonzero_exit_cannot_pass_even_if_proof_exists(self):
         def failed(argv,prompt,root,timeout):
             (root/"proof.txt").write_text(s.PROOF)
