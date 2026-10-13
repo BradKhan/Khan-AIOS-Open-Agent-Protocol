@@ -46,6 +46,22 @@ class RoleTests(unittest.TestCase):
         with self.assertRaisesRegex(agents.AgentError, "not declared"):
             agents.bundle("engineer", include_skills=["impeccable"])
 
+    def test_context_bundle_never_includes_unvetted_manual_skill(self):
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import patch
+        from scripts import skills as skill_module
+        with tempfile.TemporaryDirectory() as temp:
+            # Simulate an existing skill file whose provenance is untrusted.
+            with patch.object(agents,"plan",return_value={
+                "role":"writer","mode":"write-branch","stage":"implement",
+                "context":{"files":[]},"skills":[{
+                    "id":"humanizer","installed":True,
+                    "entrypoint":".agents/skills/humanizer/SKILL.md"}]}):
+                with patch.object(skill_module,"audit",return_value=[]):
+                    with self.assertRaisesRegex(agents.AgentError,"provenance"):
+                        agents.bundle("writer",include_skills=["humanizer"],root=Path(temp))
+
     def test_context_bundle_requires_installed_skill(self):
         with self.assertRaisesRegex(agents.AgentError, "not installed"):
             agents.bundle("designer", include_skills=["impeccable"])

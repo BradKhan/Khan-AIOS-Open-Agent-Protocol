@@ -10,9 +10,9 @@ import re
 import sys
 from pathlib import Path
 try:
-    from scripts import agents, pr_gate
+    from scripts import agents, pr_gate, skills
 except ModuleNotFoundError:
-    import agents, pr_gate
+    import agents, pr_gate, skills
 
 ROOT=Path(__file__).resolve().parents[1]
 TIERS=("fast","standard","critical")
@@ -49,12 +49,17 @@ def select(description,paths=(),risk="standard",root=ROOT,strict=False):
     allowed=set(roles[primary]["skills"])
     if not set(requested)<=allowed:
         raise ActivationError("activation requested skills outside role registry")
-    installed=[];missing=[]
+    # File existence is not proof of a vetted installation. Before adding
+    # third-party instructions to an agent prompt, verify installer provenance
+    # and every installed file hash against the pinned catalog receipt.
+    candidates=[]
     for skill in requested:
         target=root/".agents/skills"/skill/"SKILL.md"
         if target.is_file() and not target.is_symlink() and not target.parent.is_symlink():
-            installed.append(skill)
-        else:missing.append(skill)
+            candidates.append(skill)
+    audited=set(skills.audit(root)) if candidates else set()
+    installed=[skill for skill in requested if skill in audited]
+    missing=[skill for skill in requested if skill not in audited]
     if strict and missing:
         raise ActivationError("required skills not installed: "+", ".join(missing))
     review_roles=["reviewer"]
@@ -76,6 +81,6 @@ def main():
     p.add_argument("--strict",action="store_true")
     args=p.parse_args()
     try:print(json.dumps(select(args.description,args.path,args.risk,strict=args.strict),indent=2))
-    except (ActivationError,agents.AgentError,ValueError,OSError) as exc:
+    except (ActivationError,agents.AgentError,skills.SkillError,ValueError,OSError) as exc:
         print("activate: "+str(exc),file=sys.stderr);raise SystemExit(1)
 if __name__=="__main__":main()

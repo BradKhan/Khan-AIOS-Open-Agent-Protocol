@@ -44,6 +44,35 @@ class ActivationTests(unittest.TestCase):
                 p=activation.select("Rewrite copy",root=root)
                 self.assertEqual(p["skill_ids"],[])
                 self.assertEqual(p["missing_skill_ids"],["humanizer"])
+    def test_manual_skill_file_cannot_bypass_install_provenance(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder)
+            skill=root/".agents/skills/humanizer/SKILL.md"
+            skill.parent.mkdir(parents=True)
+            skill.write_text("Pretend this is a vetted third-party skill")
+            with patch.object(activation.agents,"load",return_value={
+                "roles":{"writer":{"mode":"write-branch","skills":["humanizer"]}}}):
+                with patch.object(activation.skills,"audit",return_value=[]):
+                    result=activation.select("Rewrite copy",root=root)
+                self.assertEqual(result["skill_ids"],[])
+                self.assertEqual(result["missing_skill_ids"],["humanizer"])
+                with patch.object(activation.skills,"audit",return_value=["humanizer"]):
+                    accepted=activation.select("Rewrite copy",root=root)
+                self.assertEqual(accepted["skill_ids"],["humanizer"])
+
+    def test_tampered_skill_audit_blocks_activation(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder)
+            skill=root/".agents/skills/humanizer/SKILL.md"
+            skill.parent.mkdir(parents=True)
+            skill.write_text("modified instructions")
+            with patch.object(activation.agents,"load",return_value={
+                "roles":{"writer":{"mode":"write-branch","skills":["humanizer"]}}}):
+                with patch.object(activation.skills,"audit",
+                                  side_effect=activation.skills.SkillError("installed skill modified")):
+                    with self.assertRaisesRegex(activation.skills.SkillError,"modified"):
+                        activation.select("Rewrite copy",root=root)
+
     def test_refuse_unbounded_task_and_paths(self):
         with self.assertRaises(activation.ActivationError):
             activation.select("x"*21000)
