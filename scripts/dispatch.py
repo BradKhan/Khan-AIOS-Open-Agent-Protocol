@@ -12,9 +12,9 @@ import sys
 import tempfile
 from pathlib import Path
 try:
-    from scripts import attest, lifecycle, supervisor, activation, activation
+    from scripts import attest, lifecycle, supervisor, activation
 except ModuleNotFoundError:
-    import attest, lifecycle, supervisor
+    import attest, lifecycle, supervisor, activation
 
 ROOT=Path(__file__).resolve().parents[1]
 class DispatchError(ValueError):pass
