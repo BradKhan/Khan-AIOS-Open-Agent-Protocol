@@ -28,7 +28,7 @@ def select(description,paths=(),risk="standard",root=ROOT,strict=False):
     if risk not in TIERS:raise ActivationError("invalid requested risk tier")
     if not isinstance(paths,(list,tuple)) or len(paths)>100 or any(not isinstance(p,str) or not p or len(p)>500 for p in paths):
         raise ActivationError("invalid working paths")
-    inferred=pr_gate.required_risk(list(paths))
+    inferred=pr_gate.required_risk(list(paths)) if paths else "fast"
     effective=TIERS[max(TIERS.index(risk),TIERS.index(inferred))]
     text=description.lower()
     suffixes={Path(p).suffix.lower() for p in paths}
@@ -52,7 +52,7 @@ def select(description,paths=(),risk="standard",root=ROOT,strict=False):
     installed=[];missing=[]
     for skill in requested:
         target=root/".agents/skills"/skill/"SKILL.md"
-        if target.is_file() and not target.is_symlink():
+        if target.is_file() and not target.is_symlink() and not target.parent.is_symlink():
             installed.append(skill)
         else:missing.append(skill)
     if strict and missing:
