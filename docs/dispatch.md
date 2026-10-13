@@ -30,3 +30,7 @@ Failure is retained in SQLite with its event history, retry count and cost reser
 ### Commit-bound handoff
 
 The final PR handoff includes `verification.head_sha` equal to the tested Git commit. PR movement or local checkout movement during execution rejects the handoff. Tests operate in a detached temporary worktree of that exact SHA and may not modify the checkout. The test runner is still repository code and not intrinsically trusted: independent CI on the actual PR commit remains mandatory before acceptance.
+
+### Adaptive role and skill routing
+
+`openass activate --description "Design responsive dashboard" --path app/main.tsx` selects an implementation specialist, the installed role-declared skills, and required QA/review roles based on task text and changed file scope. The dispatcher uses the same deterministic selector by default. Missing external skills are reported, not silently pretended to be active; use `--strict-skills` to fail before inference if required skills are absent. `--working` supplies changed paths. Critical-risk paths add a security reviewer; these reviewers are required recommendations, **not** autonomously spawned or self-attested reviewers. Ambiguous acceptance criteria are paused for clarification instead of initiating a paid agent run. Selection does not override host permissions or GitHub approval.

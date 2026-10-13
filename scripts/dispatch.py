@@ -12,7 +12,7 @@ import sys
 import tempfile
 from pathlib import Path
 try:
-    from scripts import attest, lifecycle, supervisor
+    from scripts import attest, lifecycle, supervisor, activation, activation
 except ModuleNotFoundError:
     import attest, lifecycle, supervisor
 
@@ -86,25 +86,29 @@ def matching_pr(repo,number,head,fetch=attest.api_get):
 def dispatch(db,task_id,runtime,actor,repo=None,pr=None,reserve_cents=0,timeout=900,
              execute=False,ack_unmetered=False,max_attempts=1,root=ROOT,
              execute_agent=supervisor.run,verifier=verify_project,fetch_pr=matching_pr,
-             commit_verifier=verify_revision):
+             commit_verifier=verify_revision,working=(),strict_skills=False):
     if type(max_attempts)!=int or not 1<=max_attempts<=3:
         raise DispatchError("max_attempts must be 1..3")
     record=lifecycle.show(db,task_id)
     if record["state"] not in ("ready","failed","verifying"):
         raise DispatchError("task is not ready, failed, or verifying")
+    plan=activation.select(record["criteria"],list(working),root=root,strict=strict_skills)
+    if plan["requires_clarification"] and record["state"] in ("ready","failed"):
+        raise DispatchError("unresolved requirements; clarify acceptance criteria before inference")
     if not execute:
-        return {"task":task_id,"status":"dry-run","state":record["state"],
+        return {"task":task_id,"activation":plan,"status":"dry-run","state":record["state"],
                 "harness":runtime,"max_attempts":max_attempts,
                 "note":"No inference. Use --execute --ack-unmetered to run."}
     if not ack_unmetered:
         raise DispatchError("explicit --ack-unmetered required")
-    result={"task":task_id,"harness":runtime,"attempts":[]}
+    result={"task":task_id,"harness":runtime,"activation":plan,"attempts":[]}
     for _ in range(max_attempts):
         if record["state"]=="failed":
             record=lifecycle.transition(db,task_id,"retry",actor,record["rev"])
         if record["state"]=="ready":
-            run=execute_agent(db,task_id,runtime,"engineer",actor,root=root,timeout=timeout,
-                              reserve_cents=reserve_cents,execute=True,ack_unmetered=True)
+            run=execute_agent(db,task_id,runtime,plan["primary_role"],actor,root=root,timeout=timeout,
+                              reserve_cents=reserve_cents,execute=True,ack_unmetered=True,
+                              include_skills=plan["skill_ids"])
             result["attempts"].append({"status":run["status"],
                                        "exit_code":run.get("exit_code"),
                                        "provider_reported_cost_cents":run.get("provider_reported_cost_cents")})
@@ -149,11 +153,14 @@ def main():
     p.add_argument("--repo");p.add_argument("--pr",type=int)
     p.add_argument("--execute",action="store_true")
     p.add_argument("--ack-unmetered",action="store_true")
+    p.add_argument("--working",action="append",default=[])
+    p.add_argument("--strict-skills",action="store_true")
     a=p.parse_args()
     try:
         with lifecycle.connect(a.db) as db:
             report=dispatch(db,a.task,a.harness,a.actor,a.repo,a.pr,a.reserve_cents,
-                            a.timeout,a.execute,a.ack_unmetered,a.max_attempts)
+                            a.timeout,a.execute,a.ack_unmetered,a.max_attempts,
+                            working=a.working,strict_skills=a.strict_skills)
         print(json.dumps(report,indent=2))
         if report["status"] in ("failed","cancelled"):
             raise SystemExit(1)

@@ -24,6 +24,7 @@ class DispatchTests(unittest.TestCase):
         self.db.close();self.temp.cleanup()
     def success(self,db,id,runtime,role,actor,**kw):
         self.assertEqual(role,"engineer")
+        self.assertIsInstance(kw.get("include_skills",[]),list)
         self.assertTrue(kw["execute"])
         self.assertTrue(kw["ack_unmetered"])
         initial=lifecycle.show(db,id)
