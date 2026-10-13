@@ -38,6 +38,11 @@
       "name": "harness-cli",
       "workflow": ".github/workflows/harness-cli-compatibility.yml",
       "job": "harness-cli"
+    },
+    {
+      "name": "container-isolation",
+      "workflow": ".github/workflows/quality.yml",
+      "job": "container-isolation"
     }
   ]
 }
