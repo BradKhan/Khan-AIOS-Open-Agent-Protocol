@@ -207,8 +207,14 @@ def main():
                 if not shutil.which(a.harness):
                     raise EvaluationError("local harness executable unavailable")
                 # Verify the digest-pinned Docker runner exists before incurring inference.
-                if not a.image or "@sha256:" not in a.image:
-                    raise EvaluationError("digest-pinned Docker image required")
+                if not isinstance(a.image,str) or not sandbox.IMAGE.fullmatch(a.image):
+                    raise EvaluationError("valid digest-pinned Docker image required")
+                if not shutil.which("docker"):
+                    raise EvaluationError("Docker verifier not installed")
+                image_check=subprocess.run(["docker","image","inspect",a.image],
+                                            capture_output=True,text=True,timeout=20,check=False)
+                if image_check.returncode:
+                    raise EvaluationError("pre-pull the digest-pinned verifier image before paid execution")
                 results=[run_one(t,a.mode,a.harness,a.image,a.budget_cents) for t in selected]
                 result={"suite":"openass-coding-v1","mode":a.mode,"harness":a.harness,
                         "model_version":a.model_version,"task_ids":[t["id"] for t in selected],
