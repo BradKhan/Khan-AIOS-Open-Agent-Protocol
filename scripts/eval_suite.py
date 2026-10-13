@@ -112,18 +112,32 @@ def run_one(task,mode,runtime,image,budget_cents=100,backend="container",
         argv=live_smoke.plan(runtime,budget_cents)
         # No Git state required for a read-only acceptance evaluator, but the
         # coding CLI may require git. Initialize deterministic isolated fixture.
-        live_smoke.prepare(work)
+        # Identical git baseline; never add the live-smoke proof task or
+        # Open ASS instructions to the baseline condition.
+        for argv_ in (
+            ["git","init","-q","-b","evaluation"],
+            ["git","add","solution.py","TASK.md"] +
+                (["AGENTS.md"] if (work/"AGENTS.md").exists() else []),
+            ["git","-c","user.name=Fixture","-c","user.email=fixture@example.invalid",
+             "commit","-q","-m","immutable evaluation start"]
+        ):
+            cp=subprocess.run(argv_,cwd=work,capture_output=True,text=True,timeout=20,check=False)
+            if cp.returncode:raise EvaluationError("cannot prepare deterministic Git fixture")
+        initial={p.name:hashlib.sha256(p.read_bytes()).hexdigest()
+                 for p in work.iterdir() if p.is_file()}
         start=time.monotonic()
         call=invoke(argv,prompt,root=work,timeout=180)
         elapsed=round(time.monotonic()-start,3)
         changed=[p.relative_to(work).as_posix() for p in work.iterdir()
-                 if p.name not in (".git","solution.py","TASK.md","AGENTS.md",
-                                   "acceptance.txt")]
+                 if p.name not in (".git","solution.py","TASK.md","AGENTS.md")]
+        unchanged=all((work/name).is_file()
+                      and hashlib.sha256((work/name).read_bytes()).hexdigest()==digest
+                      for name,digest in initial.items() if name!="solution.py")
         output=verify(work,task["cases"],backend,image) if call["exit_code"]==0 else {"passed":False,"error":"agent exit nonzero"}
-        accepted=output.get("passed") is True and not changed
+        accepted=output.get("passed") is True and not changed and unchanged
         return {"id":task["id"],"accepted":accepted,"elapsed_seconds":elapsed,
                 "agent_exit_code":call["exit_code"],"verification":output,
-                "unexpected_files":changed,"reported_cost_usd":None,
+                "unexpected_files":changed,"instruction_files_unchanged":unchanged,"reported_cost_usd":None,
                 "start_sha256":hashlib.sha256(STARTER.encode()).hexdigest()}
 
 def compare(base,enhanced):
