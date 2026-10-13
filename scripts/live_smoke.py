@@ -55,6 +55,17 @@ def plan(runtime,budget_cents=100):
         argv+=["--run-budget","120"]
     return argv
 
+def git_state(folder):
+    """Exact revision and tracked/untracked changes in a disposable fixture."""
+    head=subprocess.run(["git","rev-parse","HEAD"],cwd=folder,check=False,
+                        capture_output=True,text=True,timeout=10)
+    status=subprocess.run(["git","status","--porcelain","--untracked-files=all"],
+                          cwd=folder,check=False,capture_output=True,text=True,timeout=10)
+    if head.returncode or status.returncode or len(head.stdout.strip())!=40:
+        raise LiveSmokeError("could not inspect disposable Git state")
+    return head.stdout.strip(),status.stdout.splitlines()
+
+
 def smoke(runtime,budget_cents=100,timeout=180,execute=False,
           ack_runtime_permissions=False,runner=None):
     argv=plan(runtime,budget_cents)
@@ -71,12 +82,20 @@ def smoke(runtime,budget_cents=100,timeout=180,execute=False,
     with tempfile.TemporaryDirectory(prefix="openass-agent-smoke-") as work:
         root=Path(work)
         prepare(root)
+        baseline_head,baseline_status=git_state(root)
+        if baseline_status:
+            raise LiveSmokeError("disposable checkout was dirty before the agent started")
         result=runner(argv,TASK,root=root,timeout=timeout)
-        observed=(root/"proof.txt").read_bytes() if (root/"proof.txt").is_file() else b""
-        passed=(result["exit_code"]==0 and observed==PROOF.encode("utf-8")
-                and len(list(root.glob("proof.txt")))==1)
+        proof=root/"proof.txt"
+        observed=(proof.read_bytes() if proof.is_file() and not proof.is_symlink() else b"")
+        final_head,changed=git_state(root)
+        clean_scope=(final_head==baseline_head and changed==["?? proof.txt"])
+        passed=(result["exit_code"]==0 and observed==PROOF.encode("utf-8") and clean_scope)
         return {"status":"pass" if passed else "failed",
                 "harness":runtime,"exit_code":result["exit_code"],
+                "git_head_unchanged":final_head==baseline_head,
+                "only_expected_file_changed":clean_scope,
+                "observed_changes":changed[:20],
                 "proof_sha256":hashlib.sha256(observed).hexdigest() if observed else None,
                 "expected_sha256":hashlib.sha256(PROOF.encode()).hexdigest(),
                 "elapsed_time_reported":result.get("elapsed_seconds"),
