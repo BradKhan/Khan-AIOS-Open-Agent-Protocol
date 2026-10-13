@@ -93,6 +93,7 @@ def verify_application(config):
 def main():
     verify_contracts()
     run([sys.executable,'-m','unittest','discover','-s','tests','-v'],'contract tests')
+    run([sys.executable,'scripts/eval_suite.py','self-test'],'deterministic agent evaluation self-test')
     config=json.loads((ROOT/'config/project.json').read_text())
     verify_application(config)
     print('[verify] TEMPLATE SELF-TEST ONLY' if not config['initialized'] else '[verify] Configured application checks passed; review other obligations separately')

@@ -146,6 +146,16 @@ That's a preview. To authorize a real run, append `--execute --ack-unmetered`; s
 python3 scripts/openass.py live-smoke --harness claude
 ```
 
+Open ASS v0.5 also adds an offline container execution boundary, commit-bound PR verification, and risk-adaptive role/skill selection. Preview the selected capabilities or run the reproducible evaluation fixtures:
+
+```bash
+python3 scripts/openass.py activate --description "Redesign the responsive UI" --path app/page.tsx
+python3 scripts/openass.py bench plan
+python3 scripts/openass.py bench self-test
+```
+
+The evaluation runner has 18 tasks and 56 acceptance cases. It does **not** claim proven model performance improvements: authenticated model comparisons, measured cost data, and independent real-world benchmarks still need to be run. See [evaluation suite](docs/benchmarks.md) and [commit-bound dispatch](docs/dispatch.md).
+
 The smoke command is also dry-run-first. Real, authenticated runs need your own CLI account; see [live agent testing](docs/live-smoke.md). To inspect and enable the GitHub owner settings, see [repository administration](docs/github-administration.md). The connected GitHub integration cannot turn those settings on from this chat.
 
 Harness commands are **dry-run-first**, and third-party tools may need their own installation. A local task lifecycle, read-only MCP server, browser evidence gate and GitHub attestation tool are included. Neither code generation nor a green template test substitutes for verified application behavior or authorized review.
@@ -156,7 +166,7 @@ Harness commands are **dry-run-first**, and third-party tools may need their own
 
 Open ASS is free, MIT licensed, and under active development.
 
-The framework, skill installer, context routing, and verification system are working. Full integration with different agent runtimes, broader automation, and comparative performance benchmarks are still being developed.
+The framework, skill installer, context routing, and verification system are working. The supervised runtime, sandbox option, and repeatable evaluation harness are implemented, but authenticated end-to-end comparisons, broader automation, and published performance results are still being developed.
 
 There's plenty to improve. If you find a better engineering practice, a useful skill, or a problem the framework fails to catch, bring it in. Working examples and reproducible tests are especially welcome.
 

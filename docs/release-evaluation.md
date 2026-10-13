@@ -9,3 +9,7 @@ For a real application, run browser --html APP --axe-js PATH --head-sha SHA to g
 Run readiness --repo OWNER/REPO --strict to inspect public GitHub metadata for template mode, topics and branch protection. This is an advisory owner settings check, never a substitute for checking exact required reviews and statuses.
 
 Current evaluation cases exercise mechanical controls, not real agent productivity, design taste, or runtime sandbox enforcement. Reproducible comparative agent evaluations remain separate.
+
+## v0.5 executable benchmark path
+
+`scripts/verify.py` invokes `scripts/eval_suite.py self-test` after the unit suite. The self-test executes a trusted reference solution and confirms that the broken starter fails. Eighteen evaluation tasks and their 56 withheld-from-agent acceptance cases are in `evaluations/tasks.json`. The `bench run` command requires an explicit paid-run acknowledgment and a pre-pulled digest-pinned Docker verifier image. No model accuracy, latency or cost improvement can be claimed until comparable live baseline/Open ASS runs have actually been collected.
