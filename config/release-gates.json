@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "github_actions_app_id": 15368,
+  "checks": [
+    {
+      "name": "template-contracts",
+      "workflow": ".github/workflows/verify.yml",
+      "job": "template-contracts"
+    },
+    {
+      "name": "pr-risk",
+      "workflow": ".github/workflows/pr-policy.yml",
+      "job": "pr-risk"
+    },
+    {
+      "name": "sdk-compatibility (3.11)",
+      "workflow": ".github/workflows/quality.yml",
+      "job": "sdk-compatibility",
+      "matrix_version": "3.11"
+    },
+    {
+      "name": "sdk-compatibility (3.13)",
+      "workflow": ".github/workflows/quality.yml",
+      "job": "sdk-compatibility",
+      "matrix_version": "3.13"
+    },
+    {
+      "name": "actions-security",
+      "workflow": ".github/workflows/quality.yml",
+      "job": "actions-security"
+    },
+    {
+      "name": "browser-fixtures",
+      "workflow": ".github/workflows/browser-evaluation.yml",
+      "job": "browser-fixtures"
+    },
+    {
+      "name": "harness-cli",
+      "workflow": ".github/workflows/harness-cli-compatibility.yml",
+      "job": "harness-cli"
+    }
+  ]
+}
