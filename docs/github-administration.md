@@ -29,3 +29,5 @@ Full authenticated task execution needs your provider credentials and host sandb
 Social preview artwork still needs to be uploaded manually in GitHub Settings, because GitHub does not expose that feature through the supported repository API.
 
 Claude Code's `--max-turns` is documented but intentionally absent from the CLI `--help` output (Anthropic issue #16963). The executable contract check therefore validates visible flags and separately tests that the adapter retains the documented hidden turn limiter. No prompt is sent to authenticate this behavior in CI.
+
+Attestation defaults now require the same seven checks as the owner ruleset, including `browser-fixtures` and `harness-cli`. Review evidence must come from a distinct human account on the current head (not a bot, case-variant of the PR author, or an earlier approval superseded by requested changes).

@@ -43,6 +43,26 @@ class AttestTests(unittest.TestCase):
         with self.assertRaisesRegex(attest.AttestError,"human approval"):
             attest.evaluate(PR,[RUN,GATE],reviews,{"template-contracts","pr-risk"})
 
+    def test_bot_cannot_supply_independent_human_review(self):
+        bad = [{"state":"APPROVED","commit_id":SHA,"submitted_at":"2026-10-12T18:00:00Z",
+                "user":{"login":"reviewbot[bot]","type":"Bot"}}]
+        with self.assertRaisesRegex(attest.AttestError, "human approval"):
+            attest.evaluate(PR,[RUN,GATE],bad,{"template-contracts","pr-risk"})
+
+    def test_self_approval_username_is_case_insensitive(self):
+        bad=[{"state":"APPROVED","commit_id":SHA,"submitted_at":"2026-10-12T18:00:00Z",
+              "user":{"login":"IMPLEMENTER","type":"User"}}]
+        with self.assertRaisesRegex(attest.AttestError, "human approval"):
+            attest.evaluate(PR,[RUN,GATE],bad,{"template-contracts","pr-risk"})
+
+    def test_latest_review_controls_status_with_case_variants(self):
+        earlier=dict(REV[0], user={"login":"REVIEWER","type":"User"})
+        later={"state":"CHANGES_REQUESTED","commit_id":SHA,
+               "submitted_at":"2026-10-12T19:00:00Z",
+               "user":{"login":"reviewer","type":"User"}}
+        with self.assertRaisesRegex(attest.AttestError, "human approval"):
+            attest.evaluate(PR,[RUN,GATE],[earlier,later],{"template-contracts","pr-risk"})
+
     def test_missing_check_run_pages_fail_closed(self):
         def mocked(path):
             if path.endswith("/pulls/14"):
@@ -57,6 +77,8 @@ class AttestTests(unittest.TestCase):
         self.assertIn("sdk-compatibility (3.11)", attest.DEFAULT_REQUIRED)
         self.assertIn("sdk-compatibility (3.13)", attest.DEFAULT_REQUIRED)
         self.assertIn("actions-security", attest.DEFAULT_REQUIRED)
+        self.assertIn("browser-fixtures", attest.DEFAULT_REQUIRED)
+        self.assertIn("harness-cli", attest.DEFAULT_REQUIRED)
 
     def test_trusted_app_check_prevents_fake_check_name(self):
         fake=dict(RUN, app={"slug": "untrusted-app"})
