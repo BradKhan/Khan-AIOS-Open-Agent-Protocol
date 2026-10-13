@@ -32,7 +32,7 @@ def wrap(command, workspace, image, uid=None, gid=None):
             "--security-opt=no-new-privileges","--pids-limit=64",
             "--memory=1g","--cpus=1","--user",f"{uid}:{gid}",
             "--tmpfs","/tmp:rw,nosuid,size=64m",
-            "--mount",f"type=bind,src={root.resolve()},dst=/workspace,rw",
+            "--mount",f"type=bind,src={root.resolve()},dst=/workspace",
             "--workdir","/workspace","--env","HOME=/tmp",
             "--env","PYTHONDONTWRITEBYTECODE=1",
             image,*command]
