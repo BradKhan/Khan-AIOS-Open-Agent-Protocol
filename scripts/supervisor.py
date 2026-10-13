@@ -19,9 +19,9 @@ from decimal import Decimal, InvalidOperation, ROUND_UP
 from pathlib import Path
 
 try:
-    from scripts import agents, harness, lifecycle, sandbox, sandbox
+    from scripts import agents, harness, lifecycle, sandbox
 except ModuleNotFoundError:
-    import agents, harness, lifecycle
+    import agents, harness, lifecycle, sandbox
 
 ROOT = Path(__file__).resolve().parents[1]
 class SupervisorError(ValueError): pass
