@@ -59,7 +59,10 @@ class ReleaseContractTests(unittest.TestCase):
         tmp,root,path=self.make_fixture()
         try:
             file=root/".github/workflows/verify.yml"
-            data=file.read_text().replace("  pull_request:\\n", "  pull_request:\\n    paths:\\n      - 'src/**'\\n")
+            original = file.read_text()
+            data = original.replace("  pull_request:", "  pull_request:" + chr(10)
+                                    + "    paths:" + chr(10) + "      - 'src/**'")
+            self.assertNotEqual(original, data, "test fixture did not inject path filter")
             file.write_text(data)
             with self.assertRaisesRegex(release_policy.ReleasePolicyError,"path-filtered"):
                 release_policy.read(path,root)
