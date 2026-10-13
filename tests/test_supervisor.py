@@ -67,6 +67,21 @@ class SupervisorTests(unittest.TestCase):
         self.assertEqual(result["status"],"timeout")
         self.assertEqual(lifecycle.show(self.db,self.task)["state"],"failed")
 
+    def test_direct_cli_container_backend_reports_clean_policy_error(self):
+        # The user-facing openass.py entrypoint executes supervisor.py as a script.
+        # Its fallback import path must have the container sandbox module.
+        task=lifecycle.show(self.db,self.task)
+        cmd=[sys.executable,str(ROOT/"scripts/openass.py"),"run",
+             "--db",str(self.dbpath),"run",self.task,"--harness","codex",
+             "--role","engineer","--actor","worker","--reserve-cents","20",
+             "--backend","container","--container-image","untrusted:latest"]
+        completed=__import__("subprocess").run(cmd,cwd=ROOT,text=True,
+                                              capture_output=True,timeout=20,check=False)
+        self.assertNotEqual(completed.returncode,0)
+        self.assertIn("digest-pinned",completed.stderr)
+        self.assertNotIn("NameError",completed.stderr)
+        self.assertEqual(lifecycle.show(self.db,self.task)["state"],task["state"])
+
     def test_container_requires_pinned_image_before_start(self):
         from scripts import sandbox
         self.enter(self.runtime(SIMPLE))
