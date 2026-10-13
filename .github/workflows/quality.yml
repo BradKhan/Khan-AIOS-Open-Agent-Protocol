@@ -55,4 +55,4 @@ jobs:
           image="$(docker image inspect alpine:3.21 --format '{{index .RepoDigests 0}}')"
           echo "OPENASS_TEST_IMAGE=$image" >> "$GITHUB_ENV"
       - name: Execute a genuinely isolated Docker fixture
-        run: python3 tests/docker_isolation_smoke.py
+        run: PYTHONPATH=. python3 tests/docker_isolation_smoke.py
