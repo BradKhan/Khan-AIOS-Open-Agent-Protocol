@@ -65,7 +65,7 @@ def read(path=POLICY, root=ROOT):
                     break
                 if line.startswith("  ") and not line.startswith(("   ", "#")):
                     break
-                if re.match(r"^    paths(?:-ignore)?:\\s*$", line):
+                if line.startswith("    ") and line.strip().split(":", 1)[0] in ("paths", "paths-ignore"):
                     raise ReleasePolicyError("required workflow is path-filtered: " + workflow)
     return {"app_id":app,"checks":tuple(x["name"] for x in records)}
 
