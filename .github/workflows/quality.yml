@@ -41,3 +41,18 @@ jobs:
         run: python3 -m pip install --disable-pip-version-check zizmor==1.30.1
       - name: Independently scan CI definitions for high-severity risks
         run: zizmor --offline --min-severity high --format github .
+  container-isolation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Pull a fixture image and resolve its digest
+        run: |
+          docker pull alpine:3.21
+          image="$(docker image inspect alpine:3.21 --format '{{index .RepoDigests 0}}')"
+          echo "OPENASS_TEST_IMAGE=$image" >> "$GITHUB_ENV"
+      - name: Execute a genuinely isolated Docker fixture
+        run: python3 tests/docker_isolation_smoke.py

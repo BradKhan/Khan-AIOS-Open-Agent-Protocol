@@ -18,7 +18,7 @@ class SandboxTests(unittest.TestCase):
         self.assertIn("--pull=never",args)
         self.assertIn("--user",args)
         self.assertEqual(args[args.index("--user")+1],"1000:1000")
-        self.assertEqual(args[-4:],["-",""] if False else [IMAGE,"codex","exec","-"])
+        self.assertEqual(args[-4:],[IMAGE,"codex","exec","-"])
         self.assertNotIn("--privileged",args)
         self.assertNotIn("/var/run/docker.sock"," ".join(args))
         self.assertNotIn("/home"," ".join(args))
