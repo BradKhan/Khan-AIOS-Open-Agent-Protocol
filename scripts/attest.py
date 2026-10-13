@@ -36,7 +36,8 @@ def api_get(path, token=None):
 
 
 DEFAULT_REQUIRED = ("template-contracts", "pr-risk", "sdk-compatibility (3.11)",
-                    "sdk-compatibility (3.13)", "actions-security")
+                    "sdk-compatibility (3.13)", "actions-security", "browser-fixtures",
+                    "harness-cli")
 
 
 def evaluate(pull, checks, reviews, required, human_review=True, trusted_app=None):
@@ -66,9 +67,13 @@ def evaluate(pull, checks, reviews, required, human_review=True, trusted_app=Non
             reviewer = entry.get("user") or {}
             login = reviewer.get("login")
             if login:
-                latest[login] = entry
+                latest[login.casefold()] = entry
+        author = str(pull.get("user", {}).get("login", "")).casefold()
         for login, review in latest.items():
-            if login != pull.get("user", {}).get("login") and review.get("state") == "APPROVED" and review.get("commit_id") == head:
+            reviewer = review.get("user") or {}
+            if (login != author and reviewer.get("type", "User") == "User"
+                    and not login.endswith("[bot]") and review.get("state") == "APPROVED"
+                    and review.get("commit_id") == head):
                 accepted.append(login)
         if not accepted:
             raise AttestError("no independent human approval on the current PR head")
