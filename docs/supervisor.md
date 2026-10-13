@@ -20,3 +20,7 @@ The command is dry-run-first. Paid inference requires explicit `--execute --ack-
 **Privacy:** Raw stdout/stderr are capped at 5 MB each per attempt and stored locally under `.openass/runs/` with restrictive file modes and aren't echoed to the console. They may still contain data supplied by the provider; secure and periodically purge this ignored directory.
 
 The fixtures in `tests/test_supervisor.py` run actual child processes, including cancellation and interruption recovery. Authenticated live model execution requires the operator's existing CLI credentials and remains opt-in.
+
+### v0.5 crash and stdin guarantees
+
+The state transition to `running`, budget reservation, durable event and attempt lease are now a **single SQLite IMMEDIATE transaction**; the task cannot be left running without a recoverable attempt if insertion fails. The agent prompt is fed by a monitored background writer so an unresponsive child cannot block timeout/cancellation. Crash recovery still requires a stale lease and no live local PID, and assumes the same host/process namespace; cross-host orphan recovery remains a separate orchestrator concern.

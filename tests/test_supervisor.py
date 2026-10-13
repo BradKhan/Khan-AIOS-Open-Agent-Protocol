@@ -33,6 +33,40 @@ class SupervisorTests(unittest.TestCase):
                              return_value=[sys.executable,"-c",script]))
     def enter(self,patches):
         for p in patches:self.addCleanup(p.stop);p.start()
+    def test_claim_and_attempt_are_atomic(self):
+        self.enter(self.runtime(SIMPLE))
+        with patch.object(supervisor.os,"getpid",return_value=456):
+            rev=supervisor.claim(self.db,self.task,"worker",1,30,"codex")
+        self.assertEqual(rev,2)
+        self.assertEqual(lifecycle.show(self.db,self.task)["state"],"running")
+        self.assertEqual(supervisor.previous(self.db,self.task)["worker_pid"],456)
+        self.assertEqual(lifecycle.show(self.db,self.task)["spent"],30)
+
+    def test_claim_rolls_back_when_attempt_insert_fails(self):
+        supervisor.init(self.db)
+        self.db.execute("CREATE TRIGGER block_attempt BEFORE INSERT ON attempts BEGIN SELECT RAISE(ABORT,'injected crash'); END")
+        with self.assertRaises(sqlite3.DatabaseError):
+            supervisor.claim(self.db,self.task,"worker",1,20,"codex")
+        self.assertEqual(lifecycle.show(self.db,self.task)["state"],"ready")
+        self.assertEqual(lifecycle.show(self.db,self.task)["spent"],0)
+        self.assertIsNone(supervisor.previous(self.db,self.task))
+
+    def test_atomic_claim_prevents_duplicate_workers(self):
+        supervisor.claim(self.db,self.task,"first",1,20,"codex")
+        with self.assertRaisesRegex(supervisor.SupervisorError,"claim lost"):
+            supervisor.claim(self.db,self.task,"second",1,20,"codex")
+
+    def test_stdin_backpressure_obeys_timeout(self):
+        # Child never reads the full pipe. A synchronous stdin.write would deadlock.
+        self.enter(self.runtime("import time;time.sleep(10)"))
+        with patch.object(supervisor.harness,"make_prompt",return_value="x"*2000000):
+            began=time.monotonic()
+            result=supervisor.run(self.db,self.task,"codex","engineer","worker",root=ROOT,
+                                  reserve_cents=20,execute=True,ack_unmetered=True,timeout=1)
+            self.assertLess(time.monotonic()-began,8)
+        self.assertEqual(result["status"],"timeout")
+        self.assertEqual(lifecycle.show(self.db,self.task)["state"],"failed")
+
     def test_dry_run_does_not_charge_or_mutate(self):
         self.enter(self.runtime(SIMPLE))
         r=supervisor.run(self.db,self.task,"codex","engineer","worker",

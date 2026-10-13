@@ -14,6 +14,7 @@ import sqlite3
 import subprocess
 import sys
 import time
+import threading
 from decimal import Decimal, InvalidOperation, ROUND_UP
 from pathlib import Path
 
@@ -69,6 +70,49 @@ def init(db):
       actor TEXT NOT NULL, worker_pid INTEGER NOT NULL, agent_pid INTEGER NOT NULL DEFAULT 0,
       heartbeat REAL NOT NULL, status TEXT NOT NULL, result_json TEXT,
       PRIMARY KEY(task,revision))""")
+
+def claim(db, task_id, actor, expected, reserve_cents, runtime):
+    """Atomically claim the task AND create its recoverable attempt."""
+    init(db)
+    db.execute("BEGIN IMMEDIATE")
+    try:
+        row=db.execute("SELECT * FROM tasks WHERE id=?",(task_id,)).fetchone()
+        if row is None or row["rev"]!=expected or row["state"]!="ready":
+            raise SupervisorError("task claim lost to another worker")
+        if type(reserve_cents)!=int or reserve_cents<=0 or reserve_cents>row["budget"]-row["spent"]:
+            raise SupervisorError("invalid or exhausted task budget")
+        revision=expected+1
+        db.execute("UPDATE tasks SET state='running',rev=?,spent=?,executor=? WHERE id=?",
+                   (revision,row["spent"]+reserve_cents,actor,task_id))
+        db.execute("INSERT INTO events(task,revision,action,actor,details) VALUES(?,?,?,?,?)",
+                   (task_id,revision,"start",actor,json.dumps({"cost_cents":reserve_cents,"head_sha":None})))
+        db.execute("INSERT INTO attempts(task,revision,harness,actor,worker_pid,heartbeat,status)"
+                   " VALUES(?,?,?,?,?,?,?)",
+                   (task_id,revision,runtime,actor,os.getpid(),time.time(),"running"))
+        db.execute("COMMIT")
+    except BaseException:
+        db.execute("ROLLBACK")
+        raise
+    return revision
+
+
+def feed_prompt(process, prompt):
+    """Use a daemon writer so a child that never reads stdin cannot freeze monitoring."""
+    result={"done":False,"error":None}
+    def writer():
+        try:
+            process.stdin.write(prompt.encode("utf-8"))
+            process.stdin.flush()
+        except (BrokenPipeError, OSError, ValueError) as exc:
+            result["error"]=type(exc).__name__
+        finally:
+            try:process.stdin.close()
+            except (OSError,ValueError):pass
+            result["done"]=True
+    thread=threading.Thread(target=writer,daemon=True,name="openass-stdin-writer")
+    thread.start()
+    return thread,result
+
 
 def alive(pid):
     if type(pid)!=int or pid <= 0: return False
@@ -153,17 +197,17 @@ def run(db,task_id,runtime,role,actor,root=ROOT,timeout=900,reserve_cents=0,
     if directory.is_symlink() or not directory.resolve().is_relative_to(root.resolve()):
         raise SupervisorError("unsafe runtime artifact directory")
     directory.mkdir(parents=True,exist_ok=True)
-    started=lifecycle.transition(db,task_id,"start",actor,snapshot["rev"],spend=reserve_cents)
-    rev=started["rev"]
-    db.execute("INSERT INTO attempts(task,revision,harness,actor,worker_pid,heartbeat,status) VALUES (?,?,?,?,?,?,?)",
-               (task_id,rev,runtime,actor,os.getpid(),time.time(),"running"))
+    rev=claim(db,task_id,actor,snapshot["rev"],reserve_cents,runtime)
     prefix=f"{task_id}-{rev}"
     result={"task":task_id,"attempt_revision":rev,"harness":runtime,"role":role,
             "budget_reservation_cents":reserve_cents,
             "provider_reported_cost_cents":None,
             "note":"Reservation is NOT measured spend; host must set actual provider billing limits."}
     process=None
+    writer=None
+    fed=None
     status="failed"
+    deadline=clock()+timeout
     try:
         outpath=directory/(prefix+".stdout")
         errpath=directory/(prefix+".stderr")
@@ -172,9 +216,7 @@ def run(db,task_id,runtime,role,actor,root=ROOT,timeout=900,reserve_cents=0,
             process=popen(cmd,stdin=subprocess.PIPE,stdout=stdout,stderr=stderr,cwd=root,
                           start_new_session=(os.name!="nt"))
             heartbeat(db,task_id,rev,process.pid)
-            process.stdin.write(prompt.encode("utf-8"))
-            process.stdin.close()
-            deadline=clock()+timeout
+            writer,fed=feed_prompt(process,prompt)
             while process.poll() is None:
                 if lifecycle.show(db,task_id)["state"]=="cancelled":
                     status="cancelled"
@@ -191,7 +233,11 @@ def run(db,task_id,runtime,role,actor,root=ROOT,timeout=900,reserve_cents=0,
                 heartbeat(db,task_id,rev)
                 sleep(0.25)
             code=process.wait()
+            if writer is not None:
+                writer.join(timeout=1)
         result.update(exit_code=code,stdout_sha256=digest(outpath),stderr_sha256=digest(errpath))
+        if fed is not None and (not fed["done"] or fed["error"]):
+            status="stdin-failure"
         if outpath.stat().st_size>MAX_OUTPUT_BYTES or errpath.stat().st_size>MAX_OUTPUT_BYTES:
             status="output-limit"
         usage=usage_from_output(outpath,runtime)
