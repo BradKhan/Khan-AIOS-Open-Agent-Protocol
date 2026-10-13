@@ -78,12 +78,13 @@ def bundle(role_name, working=None, include_skills=(), max_bytes=64000, root=ROO
         raise AgentError("max_bytes must be between 1 and 500000")
     manifest = plan(role_name, working, root)
     allowed = {entry["id"]: entry for entry in manifest["skills"]}
+    verified_installed = set(skills.audit(root)) if include_skills else set()
     sources = [(row["layer"], row["path"], row["sha256"]) for row in manifest["context"]["files"]]
     for name in include_skills:
         if name not in allowed:
             raise AgentError("skill not declared for this role: " + name)
-        if not allowed[name]["installed"]:
-            raise AgentError("requested skill not installed: " + name)
+        if not allowed[name]["installed"] or name not in verified_installed:
+            raise AgentError("requested skill not installed or provenance not verified: " + name)
         relative = allowed[name]["entrypoint"]
         path = context.confined_file(root, relative)
         import hashlib
