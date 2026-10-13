@@ -56,8 +56,17 @@ def read(path=POLICY, root=ROOT):
         if matrix is not None and not re.search(r"""['"]"""+re.escape(matrix)+r"""['"]""",text):
             raise ReleasePolicyError("matrix version absent from workflow: "+matrix)
         # A required check can never be path-filtered out on some PRs.
-        if re.search(r"(?ms)^  pull_request:\s*\n(?:    (?![a-z-]+:).*\n)*    paths(?:-ignore)?:",text):
-            raise ReleasePolicyError("required workflow is path-filtered: "+workflow)
+        lines = text.splitlines()
+        pull_request_index = next((i for i, line in enumerate(lines)
+                                   if line == "  pull_request:"), None)
+        if pull_request_index is not None:
+            for line in lines[pull_request_index + 1:]:
+                if line and not line.startswith((" ", "#")):
+                    break
+                if line.startswith("  ") and not line.startswith(("   ", "#")):
+                    break
+                if re.match(r"^    paths(?:-ignore)?:\\s*$", line):
+                    raise ReleasePolicyError("required workflow is path-filtered: " + workflow)
     return {"app_id":app,"checks":tuple(x["name"] for x in records)}
 
 def main():
